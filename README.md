@@ -11,12 +11,14 @@ code line of civicrm-core, including the SVN history back to 2004, and renders t
 
 ## View
 
+**https://jfilter.github.io/civicrm-code-age/**, or locally:
+
 ```sh
-python3 -m http.server -d site 8000
+python3 -m http.server -d docs 8000
 # open http://localhost:8000
 ```
 
-`site/data.json` is committed; the page loads it with `fetch`, so it needs a web server rather than `file://`.
+`docs/data.json` is committed; the page loads it with `fetch`, so it needs a web server rather than `file://`.
 
 ## Reproduce
 
@@ -28,7 +30,7 @@ JOBS=4 ./analyze.sh                            # parallelism, default: CPU count
 
 Needs `git`, `bash`, `awk` and Python 3.11+. A run blames the branch tip and one snapshot per year
 (`FIRST_SNAPSHOT_YEAR`, default 2006) and takes about 35 minutes on 10 cores. It works in a temporary bare clone,
-never touches the source clone, and overwrites `site/data.json`.
+never touches the source clone, and overwrites `docs/data.json`.
 
 ## Method
 
@@ -59,11 +61,11 @@ never touches the source clone, and overwrites `site/data.json`.
 
 | Path | Purpose |
 |---|---|
-| `analyze.sh` | Clone, graft SVN history, blame in parallel, write `site/data.json` |
+| `analyze.sh` | Clone, graft SVN history, blame in parallel, write `docs/data.json` |
 | `aggregate.py` | Fold blame output into per-file and per-snapshot line counts per year |
 | `ignore-revs.txt` | Mechanical commits skipped by blame, each with date and subject |
-| `site/index.html` | The page; no build step, no dependencies besides Google Fonts |
-| `site/data.json` | Generated data: per file and per snapshot, lines per year from 2004 |
+| `docs/index.html` | The page; no build step, no dependencies besides Google Fonts |
+| `docs/data.json` | Generated data: per file and per snapshot, lines per year from 2004 |
 
 ## License
 

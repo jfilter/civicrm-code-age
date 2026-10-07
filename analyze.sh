@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Blame every code line of civicrm-core (with the pre-2013 SVN history grafted in) at the branch
-# tip and on each January 1st, and write site/data.json. Usage: ./analyze.sh [path or URL] [branch]
+# tip and on each January 1st, and write docs/data.json. Usage: ./analyze.sh [path or URL] [branch]
 set -euo pipefail
 
 SRC=${1:-https://github.com/civicrm/civicrm-core.git}
@@ -60,4 +60,4 @@ for ((y = FIRST_SNAPSHOT_YEAR; y <= $(date +%Y); y++)); do
 done
 
 python3 -I "$HERE/aggregate.py" "$WORK/head.tsv" "$WORK/snapshots" "$WORK/repo" "$REF" "$HERE/ignore-revs.txt" \
-  > "$HERE/site/data.json"
+  > "$HERE/docs/data.json"
