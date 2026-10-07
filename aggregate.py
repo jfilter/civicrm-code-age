@@ -1,4 +1,6 @@
-"""Fold blame output (path, commit, author time, lines) into per-file and per-snapshot line counts per year."""
+"""Fold blame output (path, commit, lines) into per-file and per-snapshot line counts per year.
+
+A line's year is when the commit that last changed it reached ref, not its author date."""
 import collections
 import datetime
 import json
@@ -15,11 +17,35 @@ def git(*args):
     return subprocess.check_output(["git", "-C", repo, *args], text=True).strip()
 
 
-def per_file_years(tsv):
+def landing_years():
+    """Year each commit reached ref: the committer year of the first-parent commit that brought it in."""
+    parents = {}
+    for line in git("rev-list", "--parents", ref).splitlines():
+        c, *ps = line.split()
+        parents[c] = ps
+    landed = {}
+    for line in reversed(git("log", "--first-parent", "--format=%H %ct", ref).splitlines()):
+        f, ct = line.split()
+        year = datetime.datetime.fromtimestamp(int(ct), datetime.UTC).year
+        stack = [f]
+        while stack:
+            c = stack.pop()
+            if c[:10] not in landed:
+                landed[c[:10]] = year
+                stack.extend(parents[c])
+    return landed
+
+
+LANDED = landing_years()
+
+
+def read_blame(tsv):
     files = collections.defaultdict(lambda: [0] * (Y1 - Y0 + 1))
     for line in open(tsv):
-        path, _commit, ts, n = line.rstrip("\n").split("\t")
-        year = datetime.datetime.fromtimestamp(int(ts), datetime.UTC).year
+        path, commit, n = line.rstrip("\n").split("\t")
+        if commit not in LANDED:
+            sys.exit(f"{tsv}: {path} blames {commit}, which is not on {ref}")
+        year = LANDED[commit]
         if not Y0 <= year <= Y1:
             sys.exit(f"{tsv}: {path} has a line from {year}, outside {Y0}-{Y1}")
         files[path][year - Y0] += int(n)
@@ -29,15 +55,18 @@ def per_file_years(tsv):
 snapshots = []
 for tsv in sorted(pathlib.Path(snapshot_dir).glob("*.tsv")):
     date, commit = tsv.stem.split("_")
-    files = per_file_years(tsv)
-    snapshots.append({"date": date, "commit": commit[:10], "files": len(files), "ys": [sum(c) for c in zip(*files.values())]})
+    files = read_blame(tsv)
+    ys = [sum(c) for c in zip(*files.values())]
+    if any(ys[int(date[:4]) - Y0 :]):
+        sys.exit(f"{tsv}: snapshot holds lines that reached {ref} on or after {date}")
+    snapshots.append({"date": date, "commit": commit[:10], "files": len(files), "ys": ys})
 
 ignored = [
     git("log", "-1", "--format=%h|%ad|%s", "--date=short", h).split("|", 2)
     for h in (l.strip() for l in open(ignore_file))
     if h and not h.startswith("#")
 ]
-head = per_file_years(head_tsv)
+head = read_blame(head_tsv)
 meta = {
     "head": git("log", "-1", "--format=%h|%ad", "--date=short", ref).split("|"),
     "ref": ref,

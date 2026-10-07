@@ -4,8 +4,8 @@ How old is the code in [CiviCRM core](https://github.com/civicrm/civicrm-core)? 
 code line of civicrm-core, including the SVN history back to 2004, and renders the result as a static page:
 
 - the age mix of the codebase on January 1st of every year since 2006 and today,
-- survival curves: how long lines written in a given year stay unchanged, with their half-life,
-- the lines alive today per year written,
+- survival curves: how long lines that reached `master` in a given year stay unchanged, with their half-life,
+- the lines alive today per year of last change,
 - per area (`CRM/Contribute`, `ext/afform`, `templates/CRM/Event`, …) the share of each age band, the
   median year and a per-file drill-down.
 
@@ -29,24 +29,32 @@ JOBS=4 ./analyze.sh                            # parallelism, default: CPU count
 ```
 
 Needs `git`, `bash`, `awk` and Python 3.11+. A run blames the branch tip and one snapshot per year
-(`FIRST_SNAPSHOT_YEAR`, default 2006) and takes about two and a half hours on 10 cores. It works in a temporary bare clone,
-never touches the source clone, and overwrites `docs/data.json`.
+(`FIRST_SNAPSHOT_YEAR`, default 2006) and takes about 75 minutes on 10 cores. It works in a temporary bare
+clone, never touches the source clone, and overwrites `docs/data.json`.
+
+Blame results are cached per commit in `cache/` (`CACHE` to move it), keyed by the blame and file-filter code
+and `ignore-revs.txt`. A change to `aggregate.py` or the page re-runs in a minute; a change to the blame,
+the filters or the ignore list starts a fresh cache key and blames everything again.
 
 ## Method
 
-- **Line age** is the author date of the commit that last changed the line (`git blame -w -C`). A 2008 line
-  edited by one character in 2023 counts as 2023. Code moved to another file keeps its age when the source
+- **Line age** is when the commit that last changed the line (`git blame -w -C`) reached `master`: the
+  committer date of the first-parent commit that merged it. Author dates are not used, so work on branches
+  and in pull requests counts with its merge date, as SVN branches merged with `svn merge` always did. A
+  2008 line edited by one character in 2023 counts as 2023. Code moved to another file keeps its age when the source
   file changed in the same commit, as in splits and renames; a copy out of an untouched file counts as new.
 - **History before 2013.** civicrm-core's history starts on 2013-02-28 with "Import from SVN". `analyze.sh`
   fetches the archive [civicrm/civicrm-svn](https://github.com/civicrm/civicrm-svn) and grafts its `master`
   tip under the import commit (`git replace --graft`). That tip differs from the import by 57 lines.
 - **Mechanical commits** listed in [`ignore-revs.txt`](ignore-revs.txt) are skipped via
   `--ignore-revs-file`: mass reformatting (including the April 2012 CRM-9979 runs and their reverts), short
-  array syntax, copyright header rewrites and phpcs clean-ups.
+  array syntax, licence, copyright and version headers, type hints and phpcs clean-ups.
 - **Snapshots** repeat the blame on the last commit before January 1st of each year. Survival relates a
-  cohort's lines at each snapshot to its size on the January 1st after its year; a changed line counts as gone.
+  cohort's lines at each snapshot to its size on the January 1st after its year, which holds everything that
+  reached `master` during that year; a changed line counts as gone.
 - **Scope** is code only: `*.php`, `*.tpl`, `*.js`, `*.ts`, `*.html`, `*.css`, `*.scss`. Excluded are
-  data and generated code (`sql/`, `xml/templates/`, `DAO/` classes, `*.civix.php`,
+  data and generated code (`sql/`, message templates in `xml/templates/` and their per-version copies in
+  `CRM/Upgrade/*.msg_template/`, `DAO/` classes, `*.civix.php`,
   `CRM/Core/I18n/SchemaStructure*.php`, JSON, minified files) and the bundled
   code listed below. Files with third-party licence headers that remain make up about 0.2 % of today's lines.
 
@@ -69,8 +77,6 @@ the largest January 1st snapshot; for comparison, CiviCRM's own code had 291,723
 
 ## Limitations
 
-- SVN branch work appears as `svn merge` commits on `master` and counts with the merge date, weeks to
-  months after it was written.
 - Code imported from other repositories counts with its import date because its earlier history is not
   linked: APIv4 (2019), civicrm-setup (2020), Flexmailer (2020), RiverLea (2022) and the schema conversion
   to `*.entityType.php` (2024). These areas look younger than they are.
