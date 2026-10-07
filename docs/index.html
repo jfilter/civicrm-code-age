@@ -28,11 +28,9 @@ h2{font-size:1.15rem;font-weight:650;margin:0;text-wrap:balance}
 p{margin:0;max-width:68ch;color:var(--fg2)}
 .mono{font-family:var(--mono);font-size:.82rem}
 header{display:grid;gap:10px}
-.eyebrow{font:600 .72rem/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.stats{display:flex;flex-wrap:wrap;gap:12px 40px;margin-top:8px}
-.stat{display:grid;gap:2px}
-.stat b{font-size:1.6rem;font-weight:750;font-variant-numeric:tabular-nums;color:var(--fg)}
-.stat span{font-size:.8rem;color:var(--muted)}
+.lede{font-size:1.1rem;line-height:1.6;color:var(--fg)}
+.foot{font-size:.85rem;color:var(--muted)}
+.foot a{color:inherit}
 section{display:grid;gap:14px}
 .sec-head{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:baseline;justify-content:space-between}
 .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--fg2)}
@@ -41,8 +39,8 @@ section{display:grid;gap:14px}
 /* svg charts */
 .chart{position:relative;width:100%}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
-.chart text{font:11px var(--mono);fill:var(--muted)}
-.chart .lab{font:600 11px var(--mono);fill:var(--fg)}
+.chart text{font:12px var(--sans);font-variant-numeric:tabular-nums;fill:var(--muted)}
+.chart .lab{font:600 12px var(--sans);fill:var(--fg)}
 .chart .grid{stroke:var(--line);stroke-width:1}
 .chart .axis{stroke:var(--line);stroke-width:1}
 .chart .cross{stroke:var(--fg);stroke-width:1;opacity:.5}
@@ -51,14 +49,14 @@ section{display:grid;gap:14px}
 /* cohort columns */
 .cols-wrap{overflow-x:auto}
 .cols{display:grid;grid-template-columns:44px 1fr;min-width:560px;padding-top:10px}
-.yaxis{position:relative;height:220px;font:.7rem var(--mono);color:var(--muted)}
+.yaxis{position:relative;height:220px;font:.75rem var(--sans);font-variant-numeric:tabular-nums;color:var(--muted)}
 .yaxis span{position:absolute;right:8px;transform:translateY(50%)}
 .plot{position:relative;height:220px;display:flex;align-items:flex-end;gap:3px;border-bottom:1px solid var(--line)}
 .plot .gl{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.6;pointer-events:none}
 .col{flex:1;height:100%;display:flex;align-items:flex-end;position:relative}
 .col div{width:100%;border-radius:4px 4px 0 0;min-height:1px}
 .col:hover div,.col:focus-visible div{outline:2px solid var(--fg);outline-offset:1px}
-.xaxis{grid-column:2;display:flex;gap:3px;font:.68rem var(--mono);color:var(--muted);padding-top:4px}
+.xaxis{grid-column:2;display:flex;gap:3px;font:.72rem var(--sans);font-variant-numeric:tabular-nums;color:var(--muted);padding-top:4px}
 .xaxis span{flex:1;text-align:center}
 /* controls */
 .controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
@@ -78,7 +76,7 @@ label.ctl{font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:ce
 .row .name{font-family:var(--mono);font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .n,.row .med{font:.78rem var(--mono);color:var(--fg2);text-align:right;font-variant-numeric:tabular-nums}
 .row .med{color:var(--fg);font-weight:600}
-.head{cursor:default;font:600 .7rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.head{cursor:default;font:600 .78rem var(--sans);color:var(--muted)}
 .head:hover{background:none}
 .bar{display:flex;gap:2px;height:14px;min-width:0}
 .bar div{height:100%;min-width:0}
@@ -92,7 +90,7 @@ table{border-collapse:collapse;width:100%;font-size:.82rem;background:var(--pane
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
 th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 th:first-child,td:first-child{text-align:left;font-family:var(--mono)}
-th{font:600 .7rem var(--mono);color:var(--muted);text-transform:uppercase}
+th{font:600 .78rem var(--sans);color:var(--muted)}
 #tip{position:fixed;z-index:10;pointer-events:none;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 24px rgb(0 0 0 / .18);max-width:300px}
 #tip b{font-family:var(--mono)}
 #tip .r{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
@@ -114,10 +112,8 @@ details li{font-size:.88rem}
 <body>
 <main>
   <header>
-    <div class="eyebrow">civicrm-core · git blame · <span id="head"></span></div>
     <h1>How old is the code in CiviCRM?</h1>
-    <p>Every code line of civicrm-core, dated by the year it was last changed. The history reaches back to 2004 through the SVN archive; pure reformatting commits are left out.</p>
-    <div class="stats" id="stats"></div>
+    <p class="lede" id="lede">Each line of CiviCRM core, dated by the year it was last changed.</p>
   </header>
 
   <section aria-labelledby="h-mix">
@@ -166,16 +162,17 @@ details li{font-size:.88rem}
     <summary>Method and limitations</summary>
     <ul id="method"></ul>
   </details>
+  <p class="foot" id="foot"></p>
 </main>
 <div id="tip" hidden></div>
 
 <script>
 const BINS=[
-  {lab:'≤ 2008',from:2004,to:2008,c:'--b0',note:'SVN, CiviCRM 1.x–2.1'},
-  {lab:'2009–2012',from:2009,to:2012,c:'--b1',note:'SVN, 2.2–4.2'},
-  {lab:'2013–2017',from:2013,to:2017,c:'--b2',note:'git, 4.3–4.7'},
+  {lab:'≤ 2008',from:2004,to:2008,c:'--b0',note:'CiviCRM 1.x–2.1'},
+  {lab:'2009–2012',from:2009,to:2012,c:'--b1',note:'2.2–4.2'},
+  {lab:'2013–2017',from:2013,to:2017,c:'--b2',note:'4.3–4.7'},
   {lab:'2018–2021',from:2018,to:2021,c:'--b3',note:'5.0–5.45'},
-  {lab:'2022 on',from:2022,to:2026,c:'--b4',note:'5.46 onwards'}];
+  {lab:'2022 on',from:2022,to:2026,c:'--b4',note:'5.46 and later'}];
 const SURV_COHORTS=[2006,2010,2014,2018,2022];
 const fmt=n=>n.toLocaleString('en-US');
 const pct=(a,b)=>b?(100*a/b).toLocaleString('en-US',{maximumFractionDigits:a/b<.1?1:0})+'%':'–';
@@ -206,7 +203,6 @@ const niceStep=(max,n)=>{const raw=max/n,p=10**Math.floor(Math.log10(raw));retur
 
 fetch('data.json').then(r=>r.json()).then(D=>{
   Y0=D.meta.y0;BINS[BINS.length-1].to=D.meta.y1;const NY=D.meta.y1-Y0+1;
-  $('#head').textContent=`${D.meta.ref} ${D.meta.head[0]} · ${D.meta.head[1]}`;
   const all=Array(NY).fill(0),areas=new Map();
   for(const [p,ys] of D.files){
     ys.forEach((v,i)=>all[i]+=v);
@@ -215,10 +211,11 @@ fetch('data.json').then(r=>r.json()).then(D=>{
   }
   const total=sum(all),allBins=binsOf(all);
 
-  // stats
-  $('#stats').innerHTML=[[fmt(total),`lines of code in ${fmt(D.files.length)} files`],[pct(allBins[0]+allBins[1],total),'date from the SVN era (2012 or earlier)'],[median(all),'median year of all lines'],[pct(allBins[4],total),'written or changed since 2022']]
-    .map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
-  const legend=vals=>BINS.map((b,i)=>`<span>${swatch(i)}${b.lab} <span class="q">· ${b.note}${vals?' · '+pct(vals[i],sum(vals)):''}</span></span>`).join('');
+  // intro and footer
+  const asOf=new Date(D.meta.head[1]+'T00:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+  $('#lede').textContent=`CiviCRM core has ${(total/1e6).toLocaleString('en-US',{maximumFractionDigits:1})} million lines of code in ${fmt(D.files.length)} files. Of these, ${pct(allBins[0]+allBins[1],total)} were last changed before 2013, when the project still lived in Subversion. Half date from ${median(all)} or earlier, and ${pct(allBins[4],total)} were written or changed since 2022.`;
+  $('#foot').innerHTML=`Data: civicrm-core ${D.meta.ref} as of ${asOf} (commit ${D.meta.head[0]}). Code and method: <a href="https://github.com/jfilter/civicrm-code-age">github.com/jfilter/civicrm-code-age</a>.`;
+  const legend=vals=>BINS.map((b,i)=>`<span>${swatch(i)}${b.lab}${vals?': '+pct(vals[i],sum(vals)):''} <span class="q">(${b.note})</span></span>`).join('');
   $('#legend-mix').innerHTML=legend();
   $('#legend').innerHTML=legend(allBins);
 
@@ -267,11 +264,12 @@ fetch('data.json').then(r=>r.json()).then(D=>{
     return {c,n0,pts,half,bin:BINS.findIndex(b=>c>=b.from&&c<=b.to)}}).filter(Boolean);
   function drawSurv(){
     const host=$('#surv');host.innerHTML='';
-    const W=Math.max(300,host.clientWidth),narrow=W<600,H=narrow?240:300,L=narrow?40:56,R=narrow?92:170,T=10,B=28,tMax=Math.max(...curves.flatMap(c=>c.pts.map(p=>p.t)));
+    const W=Math.max(300,host.clientWidth),narrow=W<600,H=narrow?240:300,L=narrow?40:56,R=narrow?92:170,T=10,B=46,tMax=Math.max(...curves.flatMap(c=>c.pts.map(p=>p.t)));
     const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Line chart of the share of each cohort still unchanged over the years'},host);
     const X=t=>L+t/tMax*(W-L-R),Y=v=>H-B-v*(H-B-T);
     for(let v=0;v<=1;v+=.25){el('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:'grid'},svg);el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=v*100+'%'}
-    for(let t=0;t<=tMax;t+=narrow?5:2)el('text',{x:X(t),y:H-8,'text-anchor':'middle'},svg).textContent=t?`+${t} y`:'start';
+    for(let t=0;t<=tMax;t+=narrow?5:2)el('text',{x:X(t),y:H-B+18,'text-anchor':'middle'},svg).textContent=t;
+    el('text',{x:(L+W-R)/2,y:H-6,'text-anchor':'middle'},svg).textContent='Years after the year the code was written';
     const ends=[];
     for(const c of curves){
       el('path',{d:'M'+c.pts.map(p=>`${X(p.t)},${Y(p.v)}`).join('L'),fill:'none',stroke:`var(${BINS[c.bin].c})`,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'},svg);
@@ -285,7 +283,7 @@ fetch('data.json').then(r=>r.json()).then(D=>{
     ends.sort((a,b)=>a.y-b.y);for(let k=1;k<ends.length;k++)if(ends[k].y-ends[k-1].y<15)ends[k].y=ends[k-1].y+15;
     for(const e of ends){const lx=W-R+8;if(lx-e.x>12)el('line',{x1:e.x+4,x2:lx-4,y1:Y(e.c.pts[e.c.pts.length-1].v),y2:e.y,stroke:'var(--muted)','stroke-width':1,'stroke-dasharray':'2 3'},svg);
       const t=el('text',{x:lx,y:e.y+4,class:'lab'},svg);t.textContent=`${e.c.c}`;
-      const s=el('tspan',{dx:6},t);s.textContent=e.c.half!=null?`${narrow?'':'half-life '}${e.c.half.toFixed(1)} y`:narrow?'> 50%':'over 50% left';s.setAttribute('style','font-weight:400;fill:var(--muted)')}
+      const s=el('tspan',{dx:6},t);s.textContent=e.c.half!=null?`${narrow?'':'half-life '}${e.c.half.toFixed(1)} ${narrow?'y':'years'}`:narrow?'> 50%':'over 50% left';s.setAttribute('style','font-weight:400;fill:var(--muted)')}
   }
   drawSurv();
   let lastW=0;new ResizeObserver(([e])=>{const w=Math.round(e.contentRect.width);if(w!==lastW){lastW=w;drawMix();drawSurv()}}).observe($('#mix'));
