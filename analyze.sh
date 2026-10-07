@@ -28,8 +28,9 @@ blame_batch() {
   local f out
   out=$(mktemp "$OUT/XXXXXX")
   for f in "$@"; do
+    # -C keeps the age of code moved between files changed in the same commit.
     # LC_ALL=C: old files carry Latin-1 bytes that make a UTF-8 awk abort
-    git -C "$WORK/repo" blame -w --ignore-revs-file "$HERE/ignore-revs.txt" --line-porcelain "$COMMIT" -- "$f" \
+    git -C "$WORK/repo" blame -w -C --ignore-revs-file "$HERE/ignore-revs.txt" --line-porcelain "$COMMIT" -- "$f" \
       | LC_ALL=C awk -v f="$f" '/^[0-9a-f]{40} /{c=substr($1,1,10)} /^author-time /{n[c"\t"$2]++} END{for(k in n) print f"\t"k"\t"n[k]}'
   done > "$out"
 }
@@ -37,14 +38,16 @@ export -f blame_batch
 export WORK HERE
 
 # blame_commit COMMIT OUTFILE: per file, line counts per (commit, author time).
-# Code only: no data dumps, generated DAOs, JSON, minified assets, bundled libraries or CMS modules.
+# Code only: no data dumps, generated files, JSON, minified assets, CMS modules, design mockups or bundled
+# libraries (packages/, jscalendar 2005-2009, a SugarCRM serializer, extension SDKs).
 blame_commit() {
   export COMMIT=$1 OUT="$WORK/out"
   mkdir "$OUT"
   git -C "$WORK/repo" ls-tree -r --name-only "$COMMIT" \
     | grep -E '\.(php|tpl|js|ts|html|css|scss)$' \
-    | grep -vE '\.min\.(js|css)$|^sql/|^xml/templates/|/DAO/' \
-    | grep -vE '^(PEAR|packages|packages\.orig|mambo|modules|drupal|joomla|WordPress|standalone|l10n)/' \
+    | grep -vE '\.min\.(js|css)$|^sql/|^xml/templates/|/DAO/|\.civix\.php$|^CRM/Core/I18n/SchemaStructure' \
+    | grep -vE '^(PEAR|packages|packages\.orig|mambo|modules|drupal|joomla|WordPress|standalone|l10n|mockups)/' \
+    | grep -vE '/packages/|^js/calendar[^/]*\.js$|^js/lang/calendar-|^extern/contactserialize\.php$' \
     | tr '\n' '\0' | xargs -0 -P "$JOBS" -n 40 bash -c 'blame_batch "$@"' _
   cat "$OUT"/* > "$2"
   rm -r "$OUT"

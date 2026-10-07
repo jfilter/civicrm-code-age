@@ -1,9 +1,17 @@
-# Mechanical mass commits: reformatting, short array syntax, copyright headers, phpcs.
+# Mechanical mass commits: reformatting, short array syntax, copyright and version headers, type hints, phpcs.
 # Used as git blame --ignore-revs-file. SVN-era hashes need the history graft from analyze.sh.
 # 2005-08-05 - licence changes step 1 - 	folders Actvity, Admin, Commerce, Contact and Core done
 4ffb559b3a1b99f21fe8653e810a6a58a6000035
+# 2005-08-05 - licensing change part 2 -  	remaining folders from CRM/ changed
+c5de1a560106f3f3dc1a80200b458e3b1ccfe68e
+# 2005-08-05 - licensing change part 3 -  	test/, modules/, api/, js/ folders modified
+8dd08646119509b41e1c32995cb28459da8ccfff
 # 2005-12-01 - changed copyright stuff "Social Source Foundation" to " Donald A. Lobo"
 cba4cd40b3d56b96ff8e41817358679ef148e581
+# 2006-03-03 - changed version no in the files from 1.3 to 1.4
+d4392a7e524b4de44ce416114c45dfb4afa785f0
+# 2006-07-05 upgrade version number to 1.5
+757476de008d81a94b7edb67c9c3e4e69b0a1e8a
 # 2006-09-10 merge r6891 (copyright change) from branches/v1.5
 f3284a0c03b7e9877184fff591958fec77d381e5
 # 2006-09-10 sync l10n with branches/v1.5 (for copyright changes)
@@ -14,12 +22,42 @@ f3284a0c03b7e9877184fff591958fec77d381e5
 113654564231ba28b4ab1f6c034292420b6816b2
 # 2007-03-30 merge 9076:9107 from branches/v1.7 - just the header changes
 49734d8f8983e3396b4cd89adacd0e2e14898911
+# 2007-06-17 svn merge -r 10010:10014 http://svn.civicrm.org/branches/v1.8 (version number change)
+4c0c880a436493868df81eee87ea2d6466bd65ce
+# 2007-09-12 svn merge -r 11313:11314 http://svn.civicrm.org/branches/v1.9 (update version information)
+95c554fe156425be0042901317b93e5b79da9f15
 # 2007-11-30 port CiviCRM to GNU Affero General Public License Version 3
 ec28a562b5ea8ad2b87c6f7785d5839b499be86b
 # 2008-03-04 update the copyright info
 c55c6cc97f5d8568784bb1d6be71087e3f52a1cf
+# 2008-03-04 upgrade CiviCRM version number to 2.1
+87d805b0cea6a42c1e8b20d417f2f2b54dea5eeb
 # 2008-12-10 fixed version and copyright
 555ac064b25acc80f1cb23b1ab1e193c85aa62b7
+# 2009-07-28 changed version to 3.0
+d3ecad087ca5c2904e68f4f3d062b762a0db8370
+# 2009-10-29 #updated CiviCRM version to 3.1
+382e3b3f3c89483037ed1fbc01c96d167e199f72
+# 2010-02-01 svn log -r 26022:26094 http://svn.civicrm.org/civicrm/branches/v3.1 including CRM-5101, CRM-5272, CRM-5472, CRM-5529, CRM-5636, CRM-5663, CRM-5667, CRM-5682, CRM-5702, CRM-5705, CRM-5711, CRM-5712, CRM-5713, CRM-5714, CRM-5716, CRM-5719, CRM-5727, CRM-5729, CRM-5732, CRM-5735, CRM-5736 works/fixes
+a0d662a5d99946cfcc27d1abdd02c6edc7ca041a
+# 2010-02-18 svn merge -r 26283:26284 http://svn.civicrm.org/civicrm/branches/v3.1
+26033456dd9bd09c933a831b1090f548fb728315
+# 2010-02-18 svn merge -r 26129:26131 http://svn.civicrm.org/civicrm/branches/v3.1
+1684210624823c53310020afcc744dfc851bfbb5
+# 2010-10-14 version number change
+553647a4cd30a1655bf23ee99b73dfbbb07d1ca7
+# 2011-03-14 version number fixes
+539e93b91438173427e09e3815cf135f909a1e29
+# 2011-03-14 version number fixes
+893c1d9e2e46ec5a60ba5d9d4690193fd9309b0b
+# 2011-03-14 version number fixes
+4ecd6938772759dd28d7840481affe0055c32c9d
+# 2011-03-14 version number fixes
+567d46ebf457673fedbc762b1797723b5c75a6ea
+# 2011-11-16 fixed version
+6ae19eae510c173be66bb5101f4b5c85447b9d46
+# 2011-11-16 fixed version
+0b3e4c294526faacf4ab0256754db31ac7254ddb
 # 2012-04-04 Performed a simple whites-space reformatting of API files, toward CiviCRM Coding Standard.
 f91e46766e780f692a778c1691def1685a2b6b13
 # 2012-04-05 Implement new coding whitespace standard CRM-9979
@@ -144,6 +182,8 @@ a13552e061bf7bf9413cdac6dd57b9b883636a7a
 082d771a3ebb5991f8147b3b3e99c7f5c699d02b
 # 2013-06-18 remove trailing whitespaces en-masse
 3c7d215856dd2d528302ceec14ed0f6e958aa677
+# 2013-08-14 Update version numbers to 4.4 and lint php
+232624b1bfe3beee7476775b278b9509e1607487
 # 2014-03-28 copyright and version fixes
 06a1bc01beb8a40ba1680b6b00e084fe436cea93
 # 2014-03-28 copyright and version fixes
@@ -242,8 +282,16 @@ eceb18cc2765fb98d86e8505f3d7402411ad26e5
 fe482240fb0d8a15a50325a36b2854ffbafeffab
 # 2015-03-26 Update copyright date in comments
 e7112fa7e47b60bc62f543f89c63f1e024546995
+# 2015-08-16 version fixes
+7e9e8871fab6ef8220dffbe418460ebc9c61ed33
+# 2015-08-16 version fixes
+2c4c49caea46abf0d61de310a8715f9410d81de4
+# 2015-08-16 version fixes
+81621fee4d9c2e8c6f5272a1c6b38a86186fe185
 # 2016-02-22 style fixes based upon updated phpcs Drupal standard
 c5c263cabdd47a41f44c6a39a81e212d69616ea1
+# 2016-03-21 fix version and year
+fa938177202b0ef376e00b6cbe8be3814ef1cd28
 # 2017-01-02 fix year in headers
 0f03f337533bb76fb7fe6dcc25cdd624daef24f3
 # 2017-01-02 fix year in headers
@@ -306,6 +354,8 @@ f452d72c08c27b1881af42f12c669185c43c3e30
 9383ac272541146636af06691daa7a792dc43b57
 # 2023-07-04 Autoformat php short array syntax
 58d4d2d737f52fef85d7b61879a875061bef1893
+# 2023-08-28 Test - Add return type hints to test functions
+9df1541a8e0c1520f1879ea75cf171b13af08a91
 # 2023-09-16 Whitespace clean up on event online receipt
 0c1d533c77e520cc45fd08f06f3a2f6ce13204c7
 # 2024-03-24 Import converted schema files (xml/schema/**.xml ==> schema/**.entityType.php)
