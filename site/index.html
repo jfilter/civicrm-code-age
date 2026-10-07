@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CiviCRM Code Age</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;750&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; summary → age mix over time → survival → today's cohorts → per-area bars with file drilldown */
+:root{
+  --bg:#f7f8fa; --panel:#ffffff; --fg:#17202e; --fg2:#4a5568; --muted:#6b7585; --line:#dfe3ea; --hover:#eef2f8; --focus:#2a78d6;
+  --b0:#0d366b; --b1:#184f95; --b2:#2a78d6; --b3:#5598e7; --b4:#86b6ef;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15171b; --panel:#1c1f24; --fg:#e8ebf0; --fg2:#b4bcc8; --muted:#8e97a4; --line:#30353d; --hover:#252a31; --focus:#86b6ef;
+  --b0:#cde2fb; --b1:#86b6ef; --b2:#3987e5; --b3:#256abf; --b4:#184f95; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15171b; --panel:#1c1f24; --fg:#e8ebf0; --fg2:#b4bcc8; --muted:#8e97a4; --line:#30353d; --hover:#252a31; --focus:#86b6ef;
+  --b0:#cde2fb; --b1:#86b6ef; --b2:#3987e5; --b3:#256abf; --b4:#184f95; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);padding:32px 16px 64px}
+main{max-width:1040px;margin:0 auto;display:grid;gap:40px}
+h1{font-size:2rem;font-weight:750;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-size:1.15rem;font-weight:650;margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch;color:var(--fg2)}
+.mono{font-family:var(--mono);font-size:.82rem}
+header{display:grid;gap:10px}
+.eyebrow{font:600 .72rem/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:12px 40px;margin-top:8px}
+.stat{display:grid;gap:2px}
+.stat b{font-size:1.6rem;font-weight:750;font-variant-numeric:tabular-nums;color:var(--fg)}
+.stat span{font-size:.8rem;color:var(--muted)}
+section{display:grid;gap:14px}
+.sec-head{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:baseline;justify-content:space-between}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--fg2)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend .q{color:var(--muted)}
+/* svg charts */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font:11px var(--mono);fill:var(--muted)}
+.chart .lab{font:600 11px var(--mono);fill:var(--fg)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{stroke:var(--line);stroke-width:1}
+.chart .cross{stroke:var(--fg);stroke-width:1;opacity:.5}
+.chart .hit{fill:transparent;cursor:crosshair}
+.chart .hit:focus-visible{outline:none;stroke:var(--focus);stroke-width:2}
+/* cohort columns */
+.cols-wrap{overflow-x:auto}
+.cols{display:grid;grid-template-columns:44px 1fr;min-width:560px;padding-top:10px}
+.yaxis{position:relative;height:220px;font:.7rem var(--mono);color:var(--muted)}
+.yaxis span{position:absolute;right:8px;transform:translateY(50%)}
+.plot{position:relative;height:220px;display:flex;align-items:flex-end;gap:3px;border-bottom:1px solid var(--line)}
+.plot .gl{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.6;pointer-events:none}
+.col{flex:1;height:100%;display:flex;align-items:flex-end;position:relative}
+.col div{width:100%;border-radius:4px 4px 0 0;min-height:1px}
+.col:hover div,.col:focus-visible div{outline:2px solid var(--fg);outline-offset:1px}
+.xaxis{grid-column:2;display:flex;gap:3px;font:.68rem var(--mono);color:var(--muted);padding-top:4px}
+.xaxis span{flex:1;text-align:center}
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip,select,.toggle{font:600 .8rem var(--sans);border:1px solid var(--line);background:var(--panel);color:var(--fg2);border-radius:999px;padding:5px 12px;cursor:pointer}
+select,.toggle{border-radius:8px}
+.chip[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 .78rem var(--sans);border:0;background:var(--panel);color:var(--fg2);padding:5px 12px;cursor:pointer}
+button:focus-visible,select:focus-visible,.col:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.ctl{font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+/* area rows */
+.rows{display:grid;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.row{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr) 5.5rem 3.5rem;gap:12px;align-items:center;padding:7px 12px;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;width:100%}
+.row:first-child{border-top:0}
+.row:hover{background:var(--hover)}
+.row .name{font-family:var(--mono);font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .n,.row .med{font:.78rem var(--mono);color:var(--fg2);text-align:right;font-variant-numeric:tabular-nums}
+.row .med{color:var(--fg);font-weight:600}
+.head{cursor:default;font:600 .7rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.head:hover{background:none}
+.bar{display:flex;gap:2px;height:14px;min-width:0}
+.bar div{height:100%;min-width:0}
+.bar div:first-child{border-radius:4px 0 0 4px}.bar div:last-child{border-radius:0 4px 4px 0}
+.bar div:only-child{border-radius:4px}
+.files{border-top:1px solid var(--line);padding:6px 12px 12px 24px;display:grid;gap:2px;background:var(--bg)}
+.files .row{border:0;padding:3px 0;cursor:default;grid-template-columns:minmax(0,1fr) minmax(0,14rem) 5.5rem 3.5rem}
+.files .row .bar{height:9px}
+.files .note{font-size:.78rem;color:var(--muted);padding-top:4px}
+table{border-collapse:collapse;width:100%;font-size:.82rem;background:var(--panel)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;font-family:var(--mono)}
+th{font:600 .7rem var(--mono);color:var(--muted);text-transform:uppercase}
+#tip{position:fixed;z-index:10;pointer-events:none;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 24px rgb(0 0 0 / .18);max-width:300px}
+#tip b{font-family:var(--mono)}
+#tip .r{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
+#tip .r i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600}
+details ul{margin:10px 0 0;padding-left:18px;color:var(--fg2);display:grid;gap:6px;max-width:75ch}
+details li{font-size:.88rem}
+@media (max-width:640px){
+  .row{grid-template-columns:minmax(0,1fr) 3.2rem;row-gap:4px}
+  .row .bar{grid-column:1/-1;grid-row:2}
+  .row .n{display:none}
+  .head .bar{display:none}
+  .files{padding-left:12px}
+  .files .row{grid-template-columns:minmax(0,1fr) 3.2rem}
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">civicrm-core · git blame · <span id="head"></span></div>
+    <h1>How old is the code in CiviCRM?</h1>
+    <p>Every code line of civicrm-core, dated by the year it was last changed. The history reaches back to 2004 through the SVN archive; pure reformatting commits are left out.</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <section aria-labelledby="h-mix">
+    <div class="sec-head">
+      <h2 id="h-mix">Age mix of the codebase over time</h2>
+      <div class="seg" role="group" aria-label="Scale">
+        <button id="mix-share" aria-pressed="true">Share</button><button id="mix-abs" aria-pressed="false">Lines</button>
+      </div>
+    </div>
+    <p>The code as it stood on January 1st of each year and today, split by when each line was written. Old layers shrink as code is rewritten or removed.</p>
+    <div class="legend" id="legend-mix"></div>
+    <div class="chart" id="mix"></div>
+  </section>
+
+  <section aria-labelledby="h-surv">
+    <h2 id="h-surv">How long code survives</h2>
+    <p>Of the lines written in a given year, the share still unchanged after <i>n</i> years. The half-life is the time until half of them have been changed or deleted.</p>
+    <div class="chart" id="surv"></div>
+  </section>
+
+  <section aria-labelledby="h-cohort">
+    <h2 id="h-cohort">Lines alive today, by year written</h2>
+    <div class="legend" id="legend"></div>
+    <div class="cols-wrap"><div class="cols" id="cols"></div></div>
+  </section>
+
+  <section aria-labelledby="h-areas">
+    <h2 id="h-areas">Areas</h2>
+    <p>Age mix per directory, with the median year of its lines. Select an area to list its files.</p>
+    <div class="controls">
+      <div class="chips" id="chips" role="group" aria-label="Area group"></div>
+      <label class="ctl" for="sort">Sort
+        <select id="sort">
+          <option value="med">Oldest first</option>
+          <option value="old">Largest share before 2013</option>
+          <option value="n">Most lines</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
+      <button class="toggle" id="view" aria-pressed="false">Show as table</button>
+    </div>
+    <div id="areas"></div>
+  </section>
+
+  <details>
+    <summary>Method and limitations</summary>
+    <ul id="method"></ul>
+  </details>
+</main>
+<div id="tip" hidden></div>
+
+<script>
+const BINS=[
+  {lab:'≤ 2008',from:2004,to:2008,c:'--b0',note:'SVN, CiviCRM 1.x–2.1'},
+  {lab:'2009–2012',from:2009,to:2012,c:'--b1',note:'SVN, 2.2–4.2'},
+  {lab:'2013–2017',from:2013,to:2017,c:'--b2',note:'git, 4.3–4.7'},
+  {lab:'2018–2021',from:2018,to:2021,c:'--b3',note:'5.0–5.45'},
+  {lab:'2022 on',from:2022,to:2026,c:'--b4',note:'5.46 onwards'}];
+const SURV_COHORTS=[2006,2010,2014,2018,2022];
+const fmt=n=>n.toLocaleString('en-US');
+const pct=(a,b)=>b?(100*a/b).toLocaleString('en-US',{maximumFractionDigits:a/b<.1?1:0})+'%':'–';
+const $=s=>document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const tip=$('#tip');
+let Y0,STATE={group:'All',sort:'med',table:false,open:new Set(),mix:'share'};
+
+const sum=a=>a.reduce((x,y)=>x+y,0);
+function binsOf(ys){return BINS.map(b=>{let s=0;for(let y=b.from;y<=b.to;y++)s+=ys[y-Y0]||0;return s})}
+function median(ys){const t=sum(ys);let acc=0;for(let i=0;i<ys.length;i++){acc+=ys[i];if(acc>=t/2)return Y0+i}return null}
+function areaOf(p){
+  const s=p.split('/');
+  if(s[0]==='tests'){const r=s[1]==='phpunit'?s.slice(2):s.slice(1);return 'tests/'+(r.length>2?r.slice(0,2):r.slice(0,1)).join('/')}
+  if(s[0]==='templates'&&s[1]==='CRM'&&s.length>3)return s.slice(0,3).join('/');
+  if(s.length>2&&['CRM','Civi','ext','ang','js','api','css','xml','install','setup'].includes(s[0]))return s.slice(0,2).join('/');
+  return s.length>1?s[0]:'(root)';
+}
+function groupOf(a){const g=a.split('/')[0];return ['CRM','Civi','ext','templates','api','tests'].includes(g)?g:'Other'}
+function barHTML(bins,label){
+  return '<div class="bar" aria-hidden="true">'+bins.map((v,i)=>v?`<div data-tip="${i}" data-label="${label}" style="flex:${v};background:var(${BINS[i].c})"></div>`:'').join('')+'</div>';
+}
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e}
+function showTip(html,x,y){tip.innerHTML=html;tip.hidden=false;const r=tip.getBoundingClientRect();
+  tip.style.left=Math.max(8,Math.min(x+14,innerWidth-r.width-8))+'px';tip.style.top=(y+r.height+20>innerHeight?y-r.height-12:y+14)+'px'}
+const swatch=i=>`<i style="background:var(${BINS[i].c})"></i>`;
+const niceStep=(max,n)=>{const raw=max/n,p=10**Math.floor(Math.log10(raw));return [1,2,2.5,5,10].map(m=>m*p).find(s=>s>=raw)};
+
+fetch('data.json').then(r=>r.json()).then(D=>{
+  Y0=D.meta.y0;BINS[BINS.length-1].to=D.meta.y1;const NY=D.meta.y1-Y0+1;
+  $('#head').textContent=`${D.meta.ref} ${D.meta.head[0]} · ${D.meta.head[1]}`;
+  const all=Array(NY).fill(0),areas=new Map();
+  for(const [p,ys] of D.files){
+    ys.forEach((v,i)=>all[i]+=v);
+    const a=areaOf(p);if(!areas.has(a))areas.set(a,{name:a,ys:Array(NY).fill(0),files:[]});
+    const A=areas.get(a);ys.forEach((v,i)=>A.ys[i]+=v);A.files.push({p,ys});
+  }
+  const total=sum(all),allBins=binsOf(all);
+
+  // stats
+  $('#stats').innerHTML=[[fmt(total),`lines of code in ${fmt(D.files.length)} files`],[pct(allBins[0]+allBins[1],total),'date from the SVN era (2012 or earlier)'],[median(all),'median year of all lines'],[pct(allBins[4],total),'written or changed since 2022']]
+    .map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+  const legend=vals=>BINS.map((b,i)=>`<span>${swatch(i)}${b.lab} <span class="q">· ${b.note}${vals?' · '+pct(vals[i],sum(vals)):''}</span></span>`).join('');
+  $('#legend-mix').innerHTML=legend();
+  $('#legend').innerHTML=legend(allBins);
+
+  // ---- age mix over time: snapshots plus today
+  const snaps=D.snapshots.map(s=>({label:s.date.slice(0,4),date:s.date,ys:s.ys})).concat([{label:'today',date:D.meta.head[1],ys:all}]);
+  const dec=d=>{const [y,m,dd]=d.split('-').map(Number);return y+(m-1)/12+(dd-1)/365};
+  for(const s of snaps){s.x=dec(s.date);s.bins=binsOf(s.ys);s.n=sum(s.ys)}
+  function drawMix(){
+    const host=$('#mix');host.innerHTML='';
+    const W=Math.max(300,host.clientWidth),narrow=W<600,H=narrow?240:330,L=narrow?40:56,R=16,T=10,B=28,share=STATE.mix==='share';
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Stacked area chart of code lines by age band at each yearly snapshot'},host);
+    const x0=snaps[0].x,x1=snaps[snaps.length-1].x,X=x=>L+(x-x0)/(x1-x0)*(W-L-R);
+    const maxN=Math.max(...snaps.map(s=>s.n)),top=share?1:Math.ceil(maxN/niceStep(maxN,5))*niceStep(maxN,5);
+    const Y=v=>H-B-v/top*(H-B-T);
+    const step=share?.25:niceStep(maxN,5);
+    for(let v=0;v<=top+1e-9;v+=step){el('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:'grid'},svg);
+      el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=share?Math.round(v*100)+'%':(v?fmt(v/1000)+'k':'0')}
+    for(let y=Math.ceil(x0);y<=Math.floor(x1);y+=narrow?5:2)el('text',{x:X(y),y:H-8,'text-anchor':'middle'},svg).textContent=y;
+    const base=snaps.map(()=>0);
+    BINS.forEach((b,i)=>{
+      const lo=base.slice(),hi=snaps.map((s,j)=>base[j]+(share?s.bins[i]/s.n:s.bins[i]));
+      const d='M'+snaps.map((s,j)=>`${X(s.x)},${Y(hi[j])}`).join('L')+'L'+snaps.map((s,j)=>`${X(s.x)},${Y(lo[j])}`).reverse().join('L')+'Z';
+      el('path',{d,fill:`var(${b.c})`,stroke:'var(--bg)','stroke-width':1.5,'stroke-linejoin':'round'},svg);
+      hi.forEach((v,j)=>base[j]=v)});
+    const cross=el('line',{y1:T,y2:H-B,class:'cross',visibility:'hidden'},svg);
+    snaps.forEach((s,j)=>{
+      const a=j?(X(snaps[j-1].x)+X(s.x))/2:L,b=j<snaps.length-1?(X(s.x)+X(snaps[j+1].x))/2:W-R;
+      const hit=el('rect',{x:a,y:T,width:b-a,height:H-B-T,class:'hit',tabindex:0,'aria-label':`${s.date}: ${fmt(s.n)} lines`},svg);
+      const show=(cx,cy)=>{cross.setAttribute('x1',X(s.x));cross.setAttribute('x2',X(s.x));cross.setAttribute('visibility','visible');
+        showTip(`<b>${s.label==='today'?'Today, '+s.date:s.date}</b><div class="r"><span>All lines</span><span>${fmt(s.n)}</span></div>`+
+          BINS.map((b,i)=>({b,i})).reverse().filter(({i})=>s.bins[i]).map(({b,i})=>`<div class="r"><span>${swatch(i)}${b.lab}</span><span>${fmt(s.bins[i])} · ${pct(s.bins[i],s.n)}</span></div>`).join(''),cx,cy)};
+      hit.addEventListener('pointermove',e=>show(e.clientX,e.clientY));
+      hit.addEventListener('focus',()=>{const r=hit.getBoundingClientRect();show(r.left+r.width/2,r.top+40)});
+      const hide=()=>{cross.setAttribute('visibility','hidden');tip.hidden=true};
+      hit.addEventListener('pointerleave',hide);hit.addEventListener('blur',hide)});
+  }
+  for(const [id,mode] of [['#mix-share','share'],['#mix-abs','abs']])$(id).onclick=()=>{STATE.mix=mode;$('#mix-share').setAttribute('aria-pressed',mode==='share');$('#mix-abs').setAttribute('aria-pressed',mode==='abs');drawMix()};
+  drawMix();
+
+  // ---- survival: per cohort, lines still present relative to the first snapshot after the cohort year
+  const curves=SURV_COHORTS.map(c=>{
+    const i0=snaps.findIndex(s=>s.x>=c+1);if(i0<0)return null;
+    const n0=snaps[i0].ys[c-Y0];if(!n0)return null;
+    const pts=snaps.slice(i0).map(s=>({t:s.x-(c+1),v:s.ys[c-Y0]/n0,n:s.ys[c-Y0],date:s.date}));
+    let half=null;for(let k=1;k<pts.length;k++)if(pts[k].v<.5){const a=pts[k-1],b=pts[k];half=a.t+(a.v-.5)/(a.v-b.v)*(b.t-a.t);break}
+    return {c,n0,pts,half,bin:BINS.findIndex(b=>c>=b.from&&c<=b.to)}}).filter(Boolean);
+  function drawSurv(){
+    const host=$('#surv');host.innerHTML='';
+    const W=Math.max(300,host.clientWidth),narrow=W<600,H=narrow?240:300,L=narrow?40:56,R=narrow?92:170,T=10,B=28,tMax=Math.max(...curves.flatMap(c=>c.pts.map(p=>p.t)));
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Line chart of the share of each cohort still unchanged over the years'},host);
+    const X=t=>L+t/tMax*(W-L-R),Y=v=>H-B-v*(H-B-T);
+    for(let v=0;v<=1;v+=.25){el('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:'grid'},svg);el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=v*100+'%'}
+    for(let t=0;t<=tMax;t+=narrow?5:2)el('text',{x:X(t),y:H-8,'text-anchor':'middle'},svg).textContent=t?`+${t} y`:'start';
+    const ends=[];
+    for(const c of curves){
+      el('path',{d:'M'+c.pts.map(p=>`${X(p.t)},${Y(p.v)}`).join('L'),fill:'none',stroke:`var(${BINS[c.bin].c})`,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'},svg);
+      const last=c.pts[c.pts.length-1];ends.push({c,y:Y(last.v),x:X(last.t)});
+      for(const p of c.pts){const dot=el('circle',{cx:X(p.t),cy:Y(p.v),r:7,class:'hit',tabindex:0,'aria-label':`${c.c} cohort on ${p.date}: ${pct(p.v,1)} left`},svg);
+        const show=(x,y)=>showTip(`<b>Written in ${c.c}</b><div class="r"><span>${p.date}</span><span>${pct(p.v,1)} left</span></div><div class="r"><span>Lines</span><span>${fmt(p.n)} of ${fmt(c.n0)}</span></div>`,x,y);
+        dot.addEventListener('pointermove',e=>show(e.clientX,e.clientY));dot.addEventListener('focus',()=>{const r=dot.getBoundingClientRect();show(r.left,r.top)});
+        dot.addEventListener('pointerleave',()=>tip.hidden=true);dot.addEventListener('blur',()=>tip.hidden=true)}
+    }
+    // direct labels at line ends, nudged apart vertically
+    ends.sort((a,b)=>a.y-b.y);for(let k=1;k<ends.length;k++)if(ends[k].y-ends[k-1].y<15)ends[k].y=ends[k-1].y+15;
+    for(const e of ends){const lx=W-R+8;if(lx-e.x>12)el('line',{x1:e.x+4,x2:lx-4,y1:Y(e.c.pts[e.c.pts.length-1].v),y2:e.y,stroke:'var(--muted)','stroke-width':1,'stroke-dasharray':'2 3'},svg);
+      const t=el('text',{x:lx,y:e.y+4,class:'lab'},svg);t.textContent=`${e.c.c}`;
+      const s=el('tspan',{dx:6},t);s.textContent=e.c.half!=null?`${narrow?'':'half-life '}${e.c.half.toFixed(1)} y`:narrow?'> 50%':'over 50% left';s.setAttribute('style','font-weight:400;fill:var(--muted)')}
+  }
+  drawSurv();
+  let lastW=0;new ResizeObserver(([e])=>{const w=Math.round(e.contentRect.width);if(w!==lastW){lastW=w;drawMix();drawSurv()}}).observe($('#mix'));
+
+  // ---- today's cohort columns
+  const max=Math.max(...all),cstep=niceStep(max,4),top=Math.ceil(max/cstep)*cstep;
+  let ya='',g='';for(let v=0;v<=top;v+=cstep){ya+=`<span style="bottom:${100*v/top}%">${v?fmt(v/1000)+'k':'0'}</span>`;if(v)g+=`<div class="gl" style="bottom:${100*v/top}%"></div>`}
+  const binIdx=yr=>BINS.findIndex(b=>yr>=b.from&&yr<=b.to);
+  $('#cols').innerHTML=`<div class="yaxis" aria-hidden="true">${ya}</div><div class="plot" role="img" aria-label="Column chart: lines alive today by year written">${g}`+
+    all.map((v,i)=>`<div class="col" tabindex="0" data-year="${Y0+i}" aria-label="${Y0+i}: ${fmt(v)} lines"><div style="height:${100*v/top}%;background:var(${BINS[binIdx(Y0+i)].c})"></div></div>`).join('')+
+    `</div><div class="xaxis" aria-hidden="true">${all.map((_,i)=>`<span>${(Y0+i)%2===0?"'"+String(Y0+i).slice(2):''}</span>`).join('')}</div>`;
+
+  // ---- areas; small ones fold into one row per group so the list stays scannable
+  const MIN=400,list=[],small=new Map();
+  for(const A of areas.values()){const n=sum(A.ys);
+    if(n>=MIN)list.push(A);else{const g=groupOf(A.name),k=g+' · small areas';
+      if(!small.has(k))small.set(k,{name:k,ys:Array(NY).fill(0),files:[],group:g});
+      const S=small.get(k);A.ys.forEach((v,i)=>S.ys[i]+=v);S.files.push(...A.files)}}
+  list.push(...small.values());
+  for(const A of list){A.n=sum(A.ys);A.bins=binsOf(A.ys);A.med=median(A.ys);A.group=A.group||groupOf(A.name);A.old=(A.bins[0]+A.bins[1])/A.n;
+    for(const f of A.files){f.n=sum(f.ys);f.bins=binsOf(f.ys);f.med=median(f.ys)}}
+  const groups=['All','CRM','Civi','ext','templates','api','tests','Other'];
+  $('#chips').innerHTML=groups.map(g=>`<button class="chip" data-g="${g}" aria-pressed="${g===STATE.group}">${g}</button>`).join('');
+  $('#chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;STATE.group=b.dataset.g;document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===b));render()};
+  $('#sort').onchange=e=>{STATE.sort=e.target.value;render()};
+  $('#view').onclick=e=>{STATE.table=!STATE.table;e.target.setAttribute('aria-pressed',STATE.table);e.target.textContent=STATE.table?'Show as bars':'Show as table';render()};
+  function sorted(){
+    const L=list.filter(A=>STATE.group==='All'||A.group===STATE.group);
+    return L.sort({med:(a,b)=>a.med-b.med||b.old-a.old,old:(a,b)=>b.old-a.old,n:(a,b)=>b.n-a.n,name:(a,b)=>a.name.localeCompare(b.name)}[STATE.sort]);
+  }
+  function render(){
+    const L=sorted(),host=$('#areas');
+    if(STATE.table){
+      host.innerHTML=`<div class="tbl"><table><thead><tr><th>Area</th><th>Lines</th>${BINS.map(b=>`<th>${b.lab}</th>`).join('')}<th>Median</th></tr></thead><tbody>`+
+        L.map(A=>`<tr><td>${A.name}</td><td>${fmt(A.n)}</td>${A.bins.map(v=>`<td>${pct(v,A.n)}</td>`).join('')}<td>${A.med}</td></tr>`).join('')+'</tbody></table></div>';
+      return;
+    }
+    host.innerHTML='<div class="rows"><div class="row head" aria-hidden="true"><span>Area</span><span class="bar"></span><span class="n">Lines</span><span class="med">Median</span></div>'+
+      L.map(A=>{const open=STATE.open.has(A.name);
+        return `<button class="row" aria-expanded="${open}" data-a="${A.name}"><span class="name" title="${A.name}">${A.name}</span>${barHTML(A.bins,A.name)}<span class="n">${fmt(A.n)}</span><span class="med">${A.med}</span></button>`+(open?filesHTML(A):'')}).join('')+'</div>';
+  }
+  function filesHTML(A){
+    const F=[...A.files].filter(f=>f.n).sort((a,b)=>a.med-b.med||b.n-a.n),shown=F.slice(0,60);
+    return '<div class="files">'+shown.map(f=>`<div class="row"><span class="name" title="${f.p}">${f.p}</span>${barHTML(f.bins,f.p)}<span class="n">${fmt(f.n)}</span><span class="med">${f.med}</span></div>`).join('')+
+      `<div class="note">${F.length>shown.length?`The ${shown.length} oldest of ${fmt(F.length)} files.`:`${fmt(F.length)} files.`}</div></div>`;
+  }
+  $('#areas').onclick=e=>{const r=e.target.closest('button.row');if(!r)return;const a=r.dataset.a;STATE.open.has(a)?STATE.open.delete(a):STATE.open.add(a);render();
+    const again=document.querySelector(`button.row[data-a="${CSS.escape(a)}"]`);again&&again.focus()};
+  render();
+
+  // tooltips for bar segments and cohort columns
+  const lookup=label=>{for(const A of list){if(A.name===label)return A;const f=A.files.find(f=>f.p===label);if(f)return f}};
+  document.addEventListener('pointermove',e=>{
+    const seg=e.target.closest('[data-tip]'),col=e.target.closest('.col');
+    if(seg){const O=lookup(seg.dataset.label),i=+seg.dataset.tip,b=BINS[i];
+      const yrs=[];for(let y=b.from;y<=b.to;y++)if(O.ys[y-Y0])yrs.push(`<div class="r"><span>${y}</span><span>${fmt(O.ys[y-Y0])}</span></div>`);
+      showTip(`<b>${seg.dataset.label}</b><div class="r" style="margin-top:4px"><span>${swatch(i)}${b.lab}</span><span>${fmt(O.bins[i])} · ${pct(O.bins[i],O.n)}</span></div>${yrs.join('')}`,e.clientX,e.clientY)}
+    else if(col){const yr=+col.dataset.year;showTip(`<b>${yr}</b><div class="r"><span>Lines</span><span>${fmt(all[yr-Y0])}</span></div><div class="r"><span>Share</span><span>${pct(all[yr-Y0],total)}</span></div>`,e.clientX,e.clientY)}
+    else if(!e.target.closest('.hit'))tip.hidden=true});
+  document.addEventListener('focusin',e=>{const col=e.target.closest('.col');if(!col)return;const r=col.getBoundingClientRect(),yr=+col.dataset.year;
+    showTip(`<b>${yr}</b><div class="r"><span>Lines</span><span>${fmt(all[yr-Y0])}</span></div>`,r.left,r.top-40)});
+  document.addEventListener('focusout',e=>{if(e.target.closest('.col'))tip.hidden=true});
+
+  // method
+  $('#method').innerHTML=[
+    `<span class="mono">git blame -w</span> on <span class="mono">${D.meta.ref}</span> for ${fmt(D.files.length)} files (PHP, Smarty, JS/TS, HTML, CSS/SCSS). A line's year is the author date of the commit that last changed it, so a 2008 line edited by one character in 2023 counts as 2023.`,
+    `The age mix over time repeats the same blame on the last commit before January 1st of every year from ${D.snapshots.length?D.snapshots[0].date.slice(0,4):'–'}.`,
+    `civicrm-core's git history starts on 2013-02-28 with "Import from SVN". The older history comes from the archive <span class="mono">civicrm/civicrm-svn</span> (branch master), grafted under the import commit. Its tip differs from the import by 57 lines.`,
+    `SVN branches appear as "svn merge" commits, so work from feature and release branches counts with the merge date, weeks to months after it was written.`,
+    `Excluded: data and generated code (<span class="mono">sql/</span>, <span class="mono">xml/templates/</span>, <span class="mono">DAO/</span> directories, JSON, minified files), and in SVN-era snapshots the bundled libraries and CMS modules that left the repository in 2013 (<span class="mono">packages/</span>, <span class="mono">PEAR/</span>, <span class="mono">drupal/</span>, <span class="mono">joomla/</span>, <span class="mono">WordPress/</span>, <span class="mono">standalone/</span>, and similar).`,
+    `Code imported from other repositories counts with its import date: APIv4 2019, civicrm-setup 2020, Flexmailer 2020, RiverLea 2022 and the schema conversion to <span class="mono">*.entityType.php</span> 2024. These areas look younger than they are.`,
+    `Survival counts a line as gone once it is changed or deleted. A cohort's starting size is its line count on the January 1st after its year. The 2006 cohort drops sharply in 2007, when the Quest code (about 50,000 changed lines) moved to its own repository.`,
+    `Areas below ${fmt(MIN)} lines are folded into one "small areas" row per group.`,
+    `${D.meta.ignored.length} mechanical mass commits (reformatting, short array syntax, copyright headers, phpcs) are skipped with <span class="mono">--ignore-revs</span>, so their lines count for the commit before:<ul>`+[...D.meta.ignored].sort((a,b)=>a[1].localeCompare(b[1])).map(([h,d,s])=>`<li><span class="mono">${h}</span> ${d} ${s.replace(/</g,'&lt;')}</li>`).join('')+'</ul>'
+  ].map(t=>`<li>${t}</li>`).join('');
+}).catch(err=>{$('#areas').innerHTML=`<p>The data could not be loaded: ${err.message}</p>`});
+</script>
+</body>
+</html>

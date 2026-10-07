@@ -1,0 +1,312 @@
+# Mechanical mass commits: reformatting, short array syntax, copyright headers, phpcs.
+# Used as git blame --ignore-revs-file. SVN-era hashes need the history graft from analyze.sh.
+# 2005-08-05 - licence changes step 1 - 	folders Actvity, Admin, Commerce, Contact and Core done
+4ffb559b3a1b99f21fe8653e810a6a58a6000035
+# 2005-12-01 - changed copyright stuff "Social Source Foundation" to " Donald A. Lobo"
+cba4cd40b3d56b96ff8e41817358679ef148e581
+# 2006-09-10 merge r6891 (copyright change) from branches/v1.5
+f3284a0c03b7e9877184fff591958fec77d381e5
+# 2006-09-10 sync l10n with branches/v1.5 (for copyright changes)
+955fd30550e8561d6ff779a015ba27f69387e450
+# 2006-09-27 issue 1267 change in header
+645856c3fe24d8ac0a45f350959fb6e0100d1cb2
+# 2007-01-08 change copyright date and CiviCRM version number
+113654564231ba28b4ab1f6c034292420b6816b2
+# 2007-03-30 merge 9076:9107 from branches/v1.7 - just the header changes
+49734d8f8983e3396b4cd89adacd0e2e14898911
+# 2007-11-30 port CiviCRM to GNU Affero General Public License Version 3
+ec28a562b5ea8ad2b87c6f7785d5839b499be86b
+# 2008-03-04 update the copyright info
+c55c6cc97f5d8568784bb1d6be71087e3f52a1cf
+# 2008-12-10 fixed version and copyright
+555ac064b25acc80f1cb23b1ab1e193c85aa62b7
+# 2012-04-04 Performed a simple whites-space reformatting of API files, toward CiviCRM Coding Standard.
+f91e46766e780f692a778c1691def1685a2b6b13
+# 2012-04-05 Implement new coding whitespace standard CRM-9979
+55bdb2b925e78f63c6b1ef7de336e45c77a108c6
+# 2012-04-05 Performed a simple whites-space reformatting of CRM/Report files, toward CiviCRM Coding Standard.
+94474b19dea99d622a5e23f9924c0e735749bc3a
+# 2012-04-10 CRM-9979 code reformatting
+00df0bc7643edf3e779af0c5fe1be48d00da8bc9
+# 2012-04-10 CRM-9979 code reformatting
+1197ae5d082fa4cbb33ea1e61b289ff6002ac783
+# 2012-04-10 CRM-9979 code reformatting
+1d5808d0aef4af62976265963c38d02ab53e1dfe
+# 2012-04-10 CRM-9979 code reformatting
+28b9297278b92b04202cbf4d65d92f943ed84914
+# 2012-04-10 CRM-9979 code reformatting
+2b002bd582d18bfb9281957bb3302308697ebef6
+# 2012-04-10 CRM-9979 code reformatting
+2d5c0a4e6d81f5a60f3b4b94de40b68272acfd26
+# 2012-04-10 CRM-9979 code reformatting
+2e489cf1030138c743f421720bc3c17c15738790
+# 2012-04-10 CRM-9979 code reformatting
+2f638b496c90446bb118db105d1cf04596a9b8f8
+# 2012-04-10 CRM-9979 code reformatting
+36910c806a644253332bcfbc58d56f24be987f9e
+# 2012-04-10 CRM-9979 code reformatting
+3f850968b63e9189500515aa7e5f7560b9b8c991
+# 2012-04-10 CRM-9979 code reformatting
+4598572aa29f3ea08603cc065ff21388b36024d1
+# 2012-04-10 CRM-9979 code reformatting
+4ea79f7963b2d0669211af16b542036f7cb8d9f5
+# 2012-04-10 CRM-9979 code reformatting
+527bf602a157ae7c92e4f9045eed59536a61c9d1
+# 2012-04-10 CRM-9979 code reformatting
+57d4491c2f980109e86038ce672d035c82f20e13
+# 2012-04-10 CRM-9979 code reformatting
+980d576ebc875434002b7b3fadcf8ce62f1382f8
+# 2012-04-10 CRM-9979 code reformatting
+9d23fd160e7a0f1991ecd4c10e2db3f1f6fbad2a
+# 2012-04-10 CRM-9979 code reformatting
+a786dc0b34dcabfa213b0b52fc6fde9404240bc7
+# 2012-04-10 CRM-9979 code reformatting
+aa88d58a762d1a234b554d08bc5d3eabc4fda45c
+# 2012-04-10 CRM-9979 code reformatting
+aab889f173e7e9beb8f4fabbf87fe6c05854fbbf
+# 2012-04-10 CRM-9979 code reformatting
+b28dd9869ba2d5398e9f59afabfa9469e886daf1
+# 2012-04-10 CRM-9979 code reformatting
+b3e5721cecc5c9240170aef2ea95a63e236d8b18
+# 2012-04-10 CRM-9979 code reformatting
+c8bc153513d7c9184f3f591ad4772ffb62937c6b
+# 2012-04-10 CRM-9979 code reformatting
+d408438a9c3e51e1356386828f3dddb852960825
+# 2012-04-10 CRM-9979 code reformatting
+dad3f4ad62ddd9765d69ae316729134aaaa3fbf7
+# 2012-04-10 CRM-9979 code reformatting
+dc79b73ab361c669d4c65118d6f41310467009aa
+# 2012-04-10 CRM-9979 code reformatting
+f58a1ba3aa5ea10dfebf4bbdfdc0a169ae08c173
+# 2012-04-10 CRM-9979 code reformatting
+fc77e526e8bc828502d77e059d860e4e0b660b1a
+# 2012-04-10 CRM-9979 code reformatting
+fc84c54f533b2ba42d96bbef0bc1f962bc03e022
+# 2012-04-10 CRM-9979 code reformatting
+feae36da27008b37da9c68d7f51396c32fe8bcf0
+# 2012-04-10 reverting bad commit CRM-9979 svn merge -r 39556:39542 http://svn.civicrm.org/civicrm/trunk
+bfc9427f90a4998c02f043ab231b799b65c2cc10
+# 2012-04-10 reverting bad commit, CRM-9979 svn merge -r 39521:39513 http://svn.civicrm.org/civicrm/trunk
+4a5da0d1e42bf3ee9254a4491d7c0fb37208a0ae
+# 2012-04-10 reverting bad commit, CRM-9979 svn merge -r 39531:39522 http://svn.civicrm.org/civicrm/trunk
+dbfafa0f4a63ac569827e4e5ccd1a986b29659e6
+# 2012-04-10 reverting bad commit, CRM-9979 svn merge -r 39540:39533 http://svn.civicrm.org/civicrm/trunk
+c72adc013978fe8778d6bb4ea792e891b5f92c1c
+# 2012-04-10 reverting bad commit, CRM-9979 svn merge -r 39555:39532 http://svn.civicrm.org/civicrm/trunk
+1d18036ed250695814429a700c770ff2d7717a97
+# 2012-04-10 reverting bad commit, CRM-9979, svn merge -r 39513:39512 http://svn.civicrm.org/civicrm/trunk
+9b68dc031f0426c902a824f2246c6e8d8646abbc
+# 2012-04-11 CRM-9979 whitespace cleanup
+14ef467627e6715a01fa33cd9f6e181a70cf71fb
+# 2012-04-11 CRM-9979 whitespace cleanup (tests pass)
+b644f2d235ac0b9e43282bee54befceade5a5b9a
+# 2012-04-28 whitespace cleanup
+8c89d99d424832760e6e36982c4850f60669ea30
+# 2012-04-30 misc formatting fixes for new coder while debugging
+410efef76a1c0739c0e9e015f5ae1f3eb0ac0b0d
+# 2012-05-10 more whitespace fixes
+c6cecb2ad8ae6a840e8b1ca93c207d694528fc83
+# 2012-05-11 CRM-9979: Ran CiviCRM Coder's coder_format.phpd on most files (not on css, distmaker, i, joomla, js, l10n, mockups, packages, packages.orig, sql, templates, tools, WordPress, xml)
+d81da424f1c8fbc216fbe47b90cfa570cf036f34
+# 2012-05-23 Toward CRM-9979: reformatting whitespace in php code in css, distmaker, i, joomla, js, l10n,
+93ac5b75f948c29f63a6f2738a8d2a119f0d3644
+# 2012-09-28 Whitespace - I think I've run out of tabs now!
+353c8da5fd85a40af436fcf1515ede906a3bb3ba
+# 2012-09-28 whitespace - nearly out of tabs to remove!
+ed9a0b22490e31c249b59903eb0216a95dc622df
+# 2012-09-28 whitespace remove trailing spaces
+f5c77440022684053e9245469c5c0251f9e8f4fd
+# 2012-09-28 whitespace tabs to spaces
+b5ad86dc1ae5395a8a035fbae63c3e98f9dd3c8d
+# 2012-09-28 whitespace tabs to spaces
+b740867bda2c0440817d6b1f7025dd61823a293e
+# 2012-09-28 whitespace tabs to spaces
+e6eec9a307152b59c3a98e797c5e8136630dc79b
+# 2012-09-28 whitespace tabs to spaces (running out of tabs - gonna be hard to put off doing real work so
+3411dc58fd5dccffdf7aa6efe87cc5260e03afc4
+# 2012-09-28 whitespace tabs to spaces - almost run out of them argh - I'll have to do real work
+2fe51f3edca2870344c2f42d322401e6396c2c72
+# 2012-09-28 whitespace tabs to spaces and now I really am going to do what I should be doing!
+fa90ac50db131e75c2c447e6caf4d88f874c2631
+# 2012-12-04 CRM_Contribute_Form_Contribution - Reformat per Drupal
+9f8aeb46e0bb134fd539a95cbb5d63b898861900
+# 2012-12-04 EditPayment - Reformat per Drupal style
+20a0e141297b904c28e7c4e47bf49fae60d17ba3
+# 2013-02-08 updated version and copyright
+b8c7eeee70764995fb2aa8dc85a8b7b913f6eabe
+# 2013-02-08 updated version and copyright
+f74e26df71d983fba49c942c9258754b208aeae9
+# 2013-02-11 updated version and copyright
+a13552e061bf7bf9413cdac6dd57b9b883636a7a
+# 2013-03-20 whitespace cleanup
+76e86fd8640221a1225320edafd0ebc2c8192643
+# 2013-04-10 code reformatting CRM-11329
+082d771a3ebb5991f8147b3b3e99c7f5c699d02b
+# 2013-06-18 remove trailing whitespaces en-masse
+3c7d215856dd2d528302ceec14ed0f6e958aa677
+# 2014-03-28 copyright and version fixes
+06a1bc01beb8a40ba1680b6b00e084fe436cea93
+# 2014-03-28 copyright and version fixes
+06b69b1899b6304f7832f6d4d2f5af4a0acfde8c
+# 2014-03-28 copyright and version fixes
+819d0d41868b7b2f163aafe513af4a0f95ef48be
+# 2014-08-22 more whitespace
+29e8791c0afef0d4af1d62ea2f507960eec2fb3d
+# 2014-08-23 CRM-15168 whitespace only
+186e09842712daf2cf4a6dbf6118d49033ba0d5d
+# 2014-08-25 CRM-15168 stdise whitespace across schema xml to make editing easier
+8f069c03ed3f12362a670b4863ecffb8fa7811de
+# 2014-08-25 CRM-15168 whitespace only
+5435b737218354b367a7272b8518b768835f855a
+# 2014-10-28 CiviMail - Change tabs to spaces. Whitespace.
+7e6e8bd6c83bc98a8cefaa760a2b3d0fb91cbfe9
+# 2014-10-29 more whitespace -remove trailing spaces
+66cae70584f43f4d98a9a08b686487f9a0353d00
+# 2014-10-29 more whitespace cleanup
+31037a4250529895c3f32ab15ecac2aa00a5c313
+# 2014-11-27 Mass cleanup of docblocks/code/comments
+c490a46ac4bf490d3fbb31e35d24c6b43e764f00
+# 2014-12-01 Cleanup phpdoc comments
+100fef9d739cd6f5377269d230510c328e484c8c
+# 2014-12-05 whitepace y, std is => array( on same line, Reports have always been all over the place on this leading to PRs often going stale
+9d72cede30c1a6986256fba4cac6b28ea963f543
+# 2014-12-11 Report tpl whitespace cleanup
+b69e578b2e6c0c8d9aaec50e4042f6e500acc3d5
+# 2014-12-23 fix version in header
+39de6fd54b9843705d13cb9f70fbcc6296103670
+# 2014-12-30 phpcs - Fix error, "Expected 1 newline at end of file; XXX found".
+ef10e0b52408ba266239a859756d757a10348228
+# 2014-12-30 phpcs - Fix error, "Visibility must be declared on method"
+00be918220e9ac8f6d25d12ed3c9c49fddd07ff7
+# 2015-01-06 INFRA-132 - CRM/Contact - Convert single-line @param to multi-line
+77c5b6193c63d17f0c16a20b4dd4aa3a0adf8d5b
+# 2015-01-06 INFRA-132 - CRM/Core - Convert single-line @param to multi-line
+6a0b768e17b6b5271ee014b4ac30066376de1f52
+# 2015-01-06 INFRA-132 - CRM/Core - phpcbf
+2aa397bc9ba4608d4146278d55dedd4080c53aec
+# 2015-01-06 INFRA-132 - CRM/Event - phpcbf
+0479b4c8095005abb475f17c243d9ea4613db58c
+# 2015-01-06 INFRA-132 - CRM/Mailing - Convert single-line @param to multi-line
+90c8230ea5763fc14fadddbc672af05942947ca6
+# 2015-01-06 INFRA-132 - CRM/Upgrade - phpcbf (plus fixup)
+e418776ce767f5d0ce5d613fe2840ded976fbd08
+# 2015-01-06 INFRA-132 - CRM/Utils - Convert single-line @param to multi-line
+77855840b2562acc9f18b2cb4f9c22f8036bc967
+# 2015-01-06 INFRA-132 - Put space after flow-control (if/switch/for/foreach/while)
+22e263ad985b62de5cf7bdaf09555bfb3f0cd322
+# 2015-01-06 INFRA-132 - Remove white space after an opening "(" or before a closing ")"
+481a74f476c945a324382bad34630d1a78d704c7
+# 2015-01-06 INFRA-132 - api - Convert single-line @param to multi-line
+cf470720aff5ea571c20c551ca4d934db373f50f
+# 2015-01-06 INFRA-132 - tests/ - Misc
+5896d037d1e8eac7cc88adc80923ada36fdfb5fd
+# 2015-01-06 INFRA-132 - tests/ - phpcbf
+6c6e618724401e4472f7763cce97375dd47a7fdc
+# 2015-01-08 INFRA-132 - CRM/Core/BAO/RecurringEntity.php - Fix EOL
+0775436cac495db1bb1b42bf6e0ce1a08549879b
+# 2015-01-08 INFRA-132 - Trailing commas for multiline arrays
+21dfd5f567e7996ad92cf2a7d0fbe6f5fc205a5c
+# 2015-01-09 INFRA-132 - @param type fixes
+5a4f674292060ff1f07ec653e2ec4bf915f6f6ef
+# 2015-01-09 INFRA-132 - CRM/ - PHPStorm cleanup
+353ffa53c335f7b94ebaddc701e46f2bb30c7048
+# 2015-01-09 INFRA-132 - Fix spacing of @return tag in comments
+a6c01b45f0cdaee8677de72b8bf3e784d8b6b62a
+# 2015-01-09 INFRA-132 - Remove extra newlines from the bottom of docblocks
+ed5a0ff7196e306e1319bd3f5913fdb068974daa
+# 2015-01-09 INFRA-132 - tests/ - PHPStorm cleanup
+92915c5561d7ef4742bd6b46237760d6209141de
+# 2015-01-10 INFRA-132 - Docblock @param and @return tag fixes
+72b3a70c5e7890c69dd70bf00092e1217c5f15b7
+# 2015-01-11 INFRA-132 - Docblock formatting fixes
+16b10e64496e4854eb267a21aa33e961bec6ecba
+# 2015-01-12 INFRA-132 - Remove @static annotation
+ad314df7cc28a13a58caee38ccf30750572c5f11
+# 2015-01-14 INFRA-132 - Batch 14 (g)
+ae5ffbb75cf5b11a3af6d2e3e63de84803b2801a
+# 2015-01-19 INFRA-132 - Copyright header - Drupal.WhiteSpace.ScopeIndent.IncorrectExact
+d25dd0ee5e47188c3ea9ad2918f627cfac97ddbd
+# 2015-01-19 INFRA-132 - Drupal.Classes.ClassDeclaration
+96025800fa500fbbd71288fa1b0bc459f17c5bcc
+# 2015-01-19 INFRA-132 - Misc
+a1a2a83db067ec5444f056ad3fa00e85fdc176ec
+# 2015-01-19 INFRA-132 batch 2 cleanup
+e7483cbe6cd144680364ad4b4416be48c7c5258a
+# 2015-01-20 Coding standards cleanup sprint.
+8d7a9d07300f31c5ae3b25188e27a1d8711654cd
+# 2015-02-01 INFRA-132 - Batch #7
+c301f76e83796cab7a73e8edf3129013f23cf339
+# 2015-02-04 INFRA-132 add full stop after comments
+eceb18cc2765fb98d86e8505f3d7402411ad26e5
+# 2015-02-04 INFRA-132 comments to end with full stops
+fe482240fb0d8a15a50325a36b2854ffbafeffab
+# 2015-03-26 Update copyright date in comments
+e7112fa7e47b60bc62f543f89c63f1e024546995
+# 2016-02-22 style fixes based upon updated phpcs Drupal standard
+c5c263cabdd47a41f44c6a39a81e212d69616ea1
+# 2017-01-02 fix year in headers
+0f03f337533bb76fb7fe6dcc25cdd624daef24f3
+# 2017-01-02 fix year in headers
+2a73d3b05ba42e8119b7123ba93f6a7f5a2dbac4
+# 2017-12-15 Reformat DAO files to pass linting and use short array syntax
+c3fc2621677b114dd8b622ef88a3ceec0ffbcf59
+# 2018-02-23 fix header
+8c9251b398a29d9b82996ae21825c9d6478fa576
+# 2018-04-18 (NFC) Update version in header
+fee14197b427c1781e369e5bfd36816afad6d7ee
+# 2018-12-13 Update Copywrite year to be 2019
+6b83d5bdd0f2ca546924feae6aa42aeddb1d40cf
+# 2019-03-28 Short array syntax - auto-convert api dir
+cf8f0fff2d9b29aeeb6b511208054da760b4d544
+# 2019-03-29 Short array syntax - auto-format CRM directory
+be2fb01f90f5f299dd07402a41fed7c7c7567f00
+# 2019-04-05 Array syntax reformat on activity files
+96f94695beed8bd791c57278e7b72e3f96e03a62
+# 2019-04-07 Update Unit test styling to cover the future coder version
+39b959db2c4b46180f1a87b15862baa4806a732f
+# 2019-04-11 (NFC) Update CRM/Contact to match new coder style
+69078420f066e5d038b91372e9a19eb77073121b
+# 2019-04-11 (NFC) Update CRM/Contact to match new coder style
+9cd3992ec78dedca4abab11d018ca0cd26de9bc0
+# 2019-04-11 (NFC) Update CRM/Core CRM/Custom CRM/Dedupe to match the new coder style
+518fa0ee1556723e8e67e02a59e8e7f51ed76f6b
+# 2019-04-11 (NFC) update CRM/Contribute to be the new coder standard
+1330f57ae81c4ddb379f7f121de054427f6636bb
+# 2019-06-23 [NFC] code formatting
+46312f7da2d355c76c7b0c0076f55456666a3a60
+# 2019-07-01 [NFC][test] reformat jobTest class
+e07cf53ec682f0e5fa2cc53fbd9643aa3fc4b5fb
+# 2019-07-22 Autoformat /tests directory with php short array syntax
+9099cab32034e86e611f8e52c4a633494e26eac5
+# 2019-09-23 api4 - Apply standard headers
+380f354525c0529e7a2531599f0811451ae9796b
+# 2019-11-07 Update copyright date for 2020
+f299f7db79fed6f3598c84302966bda087e7cac3
+# 2019-11-13 (NFC) (dev/core#878) Simplify '@copyright' annotation
+ca5cec6777523a6f37f356378a73f7ce65928eb2
+# 2019-11-13 (NFC) (dev/core#878) Simplify copyright header (CRM/*)
+bc77d7c0798081f999e6eca92d75fa874fd04e74
+# 2019-11-13 (NFC) (dev/core#878) Simplify copyright header (Civi/*)
+41498ac5858f210bd6d4f0cd97bb1294b5110c29
+# 2019-11-13 (NFC) (dev/core#878) Simplify copyright header (api/*)
+a30c801bdf595f8a00898941142b57773e097244
+# 2019-11-13 (NFC) (dev/core#878) Simplify copyright header (misc)
+6b7eb9dfd027ca097afd7450d0fc70948c75205e
+# 2019-11-13 (NFC) (dev/core#878) Simplify copyright header (templates/*)
+1188c7a8512382b1cb588b6a1ea4b13aa9587bc9
+# 2019-11-13 (NFC) (dev/core#878) Simplify copyright header (tests/*)
+7d61e75fdbf9dc67efb0d87f8fd273083eb2d487
+# 2020-03-16 Replace CRM_Utils_Array::value with ?? in variable assignments
+9c1bc317913553a956288e52649f1c372dc7deb0
+# 2020-07-17 Fix nonstandard header comments
+f452d72c08c27b1881af42f12c669185c43c3e30
+# 2022-01-17 Run 'full drupal strictness' standard over api/v3/examples
+85651a607a837a25a272516a011f36af5f12650d
+# 2022-01-18 Remainin css phpcs fixes
+9383ac272541146636af06691daa7a792dc43b57
+# 2023-07-04 Autoformat php short array syntax
+58d4d2d737f52fef85d7b61879a875061bef1893
+# 2023-09-16 Whitespace clean up on event online receipt
+0c1d533c77e520cc45fd08f06f3a2f6ce13204c7
+# 2024-03-24 Import converted schema files (xml/schema/**.xml ==> schema/**.entityType.php)
+64fc4923319ba4f5ce0a69fa1c1392d8178173a1
