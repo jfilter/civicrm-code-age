@@ -63,7 +63,6 @@ section{display:grid;gap:14px}
 .chip,select,.toggle{font:600 .8rem var(--sans);border:1px solid var(--line);background:var(--panel);color:var(--fg2);border-radius:999px;padding:5px 12px;cursor:pointer}
 select,.toggle{border-radius:8px}
 .chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-h3{font:600 .85rem var(--sans);color:var(--fg2);margin:6px 0 -6px}
 button:focus-visible,select:focus-visible,.col:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 label.ctl{font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center}
 /* area rows */
@@ -116,11 +115,15 @@ details li{font-size:.88rem}
 
   <section aria-labelledby="h-mix">
     <h2 id="h-mix">Age mix of the codebase over time</h2>
-    <p>The code as it stood on the first of each month and today, split by the year each line was last changed. Old layers shrink as code is rewritten or removed.</p>
-    <div class="legend" id="legend-mix"></div>
-    <h3>Share of lines</h3>
+    <p>The code as it stood on the first of each month and today, split by the year each line was last changed, as a share of all lines. Old layers shrink as code is rewritten or removed.</p>
+    <div class="legend mix-legend"></div>
     <div class="chart" id="mix-share"></div>
-    <h3>Lines</h3>
+  </section>
+
+  <section aria-labelledby="h-size">
+    <h2 id="h-size">Size of the codebase by age</h2>
+    <p>The same layers in lines of code. The upper edge is the size of the codebase, so growth and removals show directly. A layer can only shrink once its years are over.</p>
+    <div class="legend mix-legend"></div>
     <div class="chart" id="mix-abs"></div>
   </section>
 
@@ -212,7 +215,7 @@ fetch('data.json').then(r=>r.json()).then(D=>{
   $('#lede').textContent=`CiviCRM core has ${(total/1e6).toLocaleString('en-US',{maximumFractionDigits:1})} million lines of code in ${fmt(D.files.length)} files. Of these, ${pct(allBins[0]+allBins[1],total)} were last changed before 2013, when the project still lived in Subversion. Half date from ${median(all)} or earlier, and ${pct(allBins[4],total)} were written or changed since 2022.`;
   $('#foot').innerHTML=`Data: civicrm-core ${D.meta.ref} as of ${asOf} (commit ${D.meta.head[0]}). Code and method: <a href="https://github.com/jfilter/civicrm-code-age">github.com/jfilter/civicrm-code-age</a>.`;
   const legend=vals=>BINS.map((b,i)=>`<span>${swatch(i)}${b.lab}${vals?': '+pct(vals[i],sum(vals)):''} <span class="q">(${b.note})</span></span>`).join('');
-  $('#legend-mix').innerHTML=legend();
+  document.querySelectorAll('.mix-legend').forEach(l=>l.innerHTML=legend());
   $('#legend').innerHTML=legend(allBins);
 
   // ---- age mix over time: snapshots plus today
