@@ -123,7 +123,7 @@ details li{font-size:.88rem}
         <button id="mix-share" aria-pressed="true">Share</button><button id="mix-abs" aria-pressed="false">Lines</button>
       </div>
     </div>
-    <p>The code as it stood on January 1st of each year and today, split by the year each line was last changed. Old layers shrink as code is rewritten or removed.</p>
+    <p>The code as it stood on the first of each month and today, split by the year each line was last changed. Old layers shrink as code is rewritten or removed.</p>
     <div class="legend" id="legend-mix"></div>
     <div class="chart" id="mix"></div>
   </section>
@@ -226,7 +226,7 @@ fetch('data.json').then(r=>r.json()).then(D=>{
   function drawMix(){
     const host=$('#mix');host.innerHTML='';
     const W=Math.max(300,host.clientWidth),narrow=W<600,H=narrow?240:330,L=narrow?40:56,R=16,T=10,B=28,share=STATE.mix==='share';
-    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Stacked area chart of code lines by age band at each yearly snapshot'},host);
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Stacked area chart of code lines by age band at each monthly snapshot'},host);
     const x0=snaps[0].x,x1=snaps[snaps.length-1].x,X=x=>L+(x-x0)/(x1-x0)*(W-L-R);
     const maxN=Math.max(...snaps.map(s=>s.n)),top=share?1:Math.ceil(maxN/niceStep(maxN,5))*niceStep(maxN,5);
     const Y=v=>H-B-v/top*(H-B-T);
@@ -243,7 +243,8 @@ fetch('data.json').then(r=>r.json()).then(D=>{
     const cross=el('line',{y1:T,y2:H-B,class:'cross',visibility:'hidden'},svg);
     snaps.forEach((s,j)=>{
       const a=j?(X(snaps[j-1].x)+X(s.x))/2:L,b=j<snaps.length-1?(X(s.x)+X(snaps[j+1].x))/2:W-R;
-      const hit=el('rect',{x:a,y:T,width:b-a,height:H-B-T,class:'hit',tabindex:0,'aria-label':`${s.date}: ${fmt(s.n)} lines`},svg);
+      const hit=el('rect',{x:a,y:T,width:b-a,height:H-B-T,class:'hit','aria-label':`${s.date}: ${fmt(s.n)} lines`},svg);
+      if(s.label==='today'||s.date.slice(5,7)==='01')hit.setAttribute('tabindex',0); // one tab stop per year
       const show=(cx,cy)=>{cross.setAttribute('x1',X(s.x));cross.setAttribute('x2',X(s.x));cross.setAttribute('visibility','visible');
         showTip(`<b>${s.label==='today'?'Today, '+s.date:s.date}</b><div class="r"><span>All lines</span><span>${fmt(s.n)}</span></div>`+
           BINS.map((b,i)=>({b,i})).reverse().filter(({i})=>s.bins[i]).map(({b,i})=>`<div class="r"><span>${swatch(i)}${b.lab}</span><span>${fmt(s.bins[i])} · ${pct(s.bins[i],s.n)}</span></div>`).join(''),cx,cy)};
@@ -274,7 +275,7 @@ fetch('data.json').then(r=>r.json()).then(D=>{
     for(const c of curves){
       el('path',{d:'M'+c.pts.map(p=>`${X(p.t)},${Y(p.v)}`).join('L'),fill:'none',stroke:`var(${BINS[c.bin].c})`,'stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round'},svg);
       const last=c.pts[c.pts.length-1];ends.push({c,y:Y(last.v),x:X(last.t)});
-      for(const p of c.pts){const dot=el('circle',{cx:X(p.t),cy:Y(p.v),r:7,class:'hit',tabindex:0,'aria-label':`${c.c} cohort on ${p.date}: ${pct(p.v,1)} left`},svg);
+      for(const p of c.pts.filter((p,k)=>p.date.slice(5,7)==='01'||k===c.pts.length-1)){const dot=el('circle',{cx:X(p.t),cy:Y(p.v),r:7,class:'hit',tabindex:0,'aria-label':`${c.c} cohort on ${p.date}: ${pct(p.v,1)} left`},svg);
         const show=(x,y)=>showTip(`<b>Reached master in ${c.c}</b><div class="r"><span>${p.date}</span><span>${pct(p.v,1)} left</span></div><div class="r"><span>Lines</span><span>${fmt(p.n)} of ${fmt(c.n0)}</span></div>`,x,y);
         dot.addEventListener('pointermove',e=>show(e.clientX,e.clientY));dot.addEventListener('focus',()=>{const r=dot.getBoundingClientRect();show(r.left,r.top)});
         dot.addEventListener('pointerleave',()=>tip.hidden=true);dot.addEventListener('blur',()=>tip.hidden=true)}
@@ -349,8 +350,8 @@ fetch('data.json').then(r=>r.json()).then(D=>{
 
   // method
   $('#method').innerHTML=[
-    `<span class="mono">git blame -w -C</span> on <span class="mono">${D.meta.ref}</span> for ${fmt(D.files.length)} files (PHP, Smarty, JS/TS, HTML, CSS/SCSS). A line's year is when the commit that last changed it reached master: the date of the first-parent commit that merged it, so work on branches and in pull requests counts with its merge date, as SVN branches merged with "svn merge" always did. A 2008 line edited by one character in 2023 counts as 2023. Code moved between files keeps its age when its source file changed in the same commit, as in splits and renames; a copy out of an untouched file counts as new.`,
-    `The age mix over time repeats the same blame on the last commit before January 1st of every year from ${D.snapshots.length?D.snapshots[0].date.slice(0,4):'–'}.`,
+    `<span class="mono">git blame -w -C</span> on <span class="mono">${D.meta.ref}</span> for ${fmt(D.files.length)} files (PHP, Smarty, JS/TS, HTML, CSS/SCSS). A line's year is when the change that produced it reached master: the date of the first-parent commit that merged it, so work on branches and in pull requests counts with its merge date, as SVN branches merged with "svn merge" always did. A 2008 line edited by one character in 2023 counts as 2023.`,
+    `Lines are followed from snapshot to snapshot, the last commit before the first of every month from ${D.snapshots.length?D.snapshots[0].date.slice(0,7):'–'}; the first snapshot takes its ages from blame. An unchanged line keeps its year. Changes are measured between snapshots, so a change reverted within the same month leaves no trace. A changed or new line keeps an old year only when blame traces it to a line that disappeared in the same month, as in moves, splits, renames and the skipped reformatting commits; a copy of code that is still there counts as new. So a year's code never grows once the year is over.`,
     `civicrm-core's git history starts on 2013-02-28 with "Import from SVN". The older history comes from the archive <span class="mono">civicrm/civicrm-svn</span> (branch master), grafted under the import commit. Its tip differs from the import by 57 lines.`,
     `Excluded: data and generated code (<span class="mono">sql/</span>, message templates in <span class="mono">xml/templates/</span> and their per-version copies in <span class="mono">CRM/Upgrade/</span>, <span class="mono">DAO/</span> directories, civix and schema-structure files, JSON, minified files), in SVN-era snapshots the CMS modules and design mockups that left the repository by 2013 (<span class="mono">drupal/</span>, <span class="mono">joomla/</span>, <span class="mono">WordPress/</span>, <span class="mono">standalone/</span>, <span class="mono">mockups/</span>, and similar), and bundled third-party code: <span class="mono">packages/</span> and <span class="mono">PEAR/</span>, the jscalendar date picker in <span class="mono">js/</span> until 2009 and a SugarCRM serializer in <span class="mono">extern/</span>. Files with third-party licence headers that remain make up about 0.2% of today's lines. <a href="https://github.com/jfilter/civicrm-code-age#excluded-bundled-code">Full list with sizes</a>.`,
     `Code imported from other repositories counts with its import date: APIv4 2019, civicrm-setup 2020, Flexmailer 2020, RiverLea 2022 and the schema conversion to <span class="mono">*.entityType.php</span> 2024. These areas look younger than they are.`,
