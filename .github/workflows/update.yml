@@ -1,0 +1,37 @@
+name: Update data
+
+on:
+  schedule:
+    - cron: "17 3 2 * *" # the 2nd of each month, after the monthly snapshot on the 1st
+  workflow_dispatch:
+
+concurrency:
+  group: update-data # two runs on one cache would overwrite each other's files
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyze civicrm-core master
+        run: python3 -I analyze.py
+      - name: Commit data
+        id: commit
+        run: |
+          git add docs/data.json cache
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update data to civicrm-core $(python3 -c 'import json; print(*json.load(open("docs/data.json"))["meta"]["head"])')"
+          git push
+          echo "pushed=1" >> "$GITHUB_OUTPUT"
+      - name: Build Pages
+        if: steps.commit.outputs.pushed
+        run: gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds"
+        env:
+          GH_TOKEN: ${{ github.token }}

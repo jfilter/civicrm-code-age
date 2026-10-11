@@ -18,6 +18,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -312,6 +313,9 @@ def main():
     ).encode()).hexdigest()[:12]
     cache = args.cache / key
     cache.mkdir(exist_ok=True)
+    for d in args.cache.iterdir():  # blame results under an older key can never be used again
+        if d.is_dir() and d.name not in (key, "repo.git"):
+            shutil.rmtree(d)
     LANDED = landing(args.ref)
     IGNORED = [h for h in (l.strip() for l in IGNORE.read_text().splitlines()) if h and not h.startswith("#")]
 

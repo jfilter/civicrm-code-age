@@ -34,9 +34,15 @@ Needs `git` and Python 3.11+, nothing else. A run follows the code from one snap
 in `cache/repo.git`, fetches the branch into it on every run, never writes to the source clone, and
 overwrites `docs/data.json`.
 
-Blame results are cached per month in `cache/` (`--cache` to move it), keyed by the blame code, the file
-filter and `ignore-revs.txt`. A later run blames only the months since the last one; a change to the blame,
-the filter or the ignore list starts a fresh key and blames everything again.
+Blame results are cached per month in `cache/<key>/` (`--cache` to move it), keyed by the blame code, the
+file filter and `ignore-revs.txt`, and committed, about 40 KB per month. A run blames only the months that are
+not cached yet; a change to the blame, the filter or the ignore list starts a fresh key, deletes the old one
+and blames everything again. Results blamed by different git versions can mix in the cache; blame changes
+rarely enough between versions that this does not move the numbers.
+
+[`.github/workflows/update.yml`](.github/workflows/update.yml) runs the analysis on the 2nd of every month,
+commits the new month's blame results and `docs/data.json`, and rebuilds the page. Start it by hand under
+Actions → Update data.
 
 ## Method
 
@@ -101,8 +107,10 @@ the largest January 1st snapshot; for comparison, CiviCRM's own code had 280,675
 | Path | Purpose |
 |---|---|
 | `analyze.py` | Fetch, graft SVN history, blame each month in parallel, follow lines from snapshot to snapshot, write `docs/data.json` |
+| `.github/workflows/update.yml` | Monthly run that commits the cache and `docs/data.json` and rebuilds the page |
 | `ignore-revs.txt` | Mechanical commits skipped by blame, each with date and subject |
 | `docs/index.html` | The page; no build step, no dependencies besides Google Fonts |
+| `cache/<key>/` | Blame results per month, so a run only blames new months |
 | `docs/data.json` | Generated data: per file and per snapshot, lines per year from 2004 |
 
 ## License
