@@ -32,7 +32,6 @@ header{display:grid;gap:10px}
 .foot{font-size:.85rem;color:var(--muted)}
 .foot a{color:inherit}
 section{display:grid;gap:14px}
-.sec-head{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:baseline;justify-content:space-between}
 .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--fg2)}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .legend .q{color:var(--muted)}
@@ -63,9 +62,8 @@ section{display:grid;gap:14px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip,select,.toggle{font:600 .8rem var(--sans);border:1px solid var(--line);background:var(--panel);color:var(--fg2);border-radius:999px;padding:5px 12px;cursor:pointer}
 select,.toggle{border-radius:8px}
-.chip[aria-pressed="true"],.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{font:600 .78rem var(--sans);border:0;background:var(--panel);color:var(--fg2);padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+h3{font:600 .85rem var(--sans);color:var(--fg2);margin:6px 0 -6px}
 button:focus-visible,select:focus-visible,.col:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 label.ctl{font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center}
 /* area rows */
@@ -117,15 +115,13 @@ details li{font-size:.88rem}
   </header>
 
   <section aria-labelledby="h-mix">
-    <div class="sec-head">
-      <h2 id="h-mix">Age mix of the codebase over time</h2>
-      <div class="seg" role="group" aria-label="Scale">
-        <button id="mix-share" aria-pressed="true">Share</button><button id="mix-abs" aria-pressed="false">Lines</button>
-      </div>
-    </div>
+    <h2 id="h-mix">Age mix of the codebase over time</h2>
     <p>The code as it stood on the first of each month and today, split by the year each line was last changed. Old layers shrink as code is rewritten or removed.</p>
     <div class="legend" id="legend-mix"></div>
-    <div class="chart" id="mix"></div>
+    <h3>Share of lines</h3>
+    <div class="chart" id="mix-share"></div>
+    <h3>Lines</h3>
+    <div class="chart" id="mix-abs"></div>
   </section>
 
   <section aria-labelledby="h-surv">
@@ -179,7 +175,7 @@ const pct=(a,b)=>b?(100*a/b).toLocaleString('en-US',{maximumFractionDigits:a/b<.
 const $=s=>document.querySelector(s);
 const NS='http://www.w3.org/2000/svg';
 const tip=$('#tip');
-let Y0,STATE={group:'All',sort:'med',table:false,open:new Set(),mix:'share'};
+let Y0,STATE={group:'All',sort:'med',table:false,open:new Set()};
 
 const sum=a=>a.reduce((x,y)=>x+y,0);
 function binsOf(ys){return BINS.map(b=>{let s=0;for(let y=b.from;y<=b.to;y++)s+=ys[y-Y0]||0;return s})}
@@ -223,10 +219,10 @@ fetch('data.json').then(r=>r.json()).then(D=>{
   const snaps=D.snapshots.map(s=>({label:s.date.slice(0,4),date:s.date,ys:s.ys})).concat([{label:'today',date:D.meta.head[1],ys:all}]);
   const dec=d=>{const [y,m,dd]=d.split('-').map(Number);return y+(m-1)/12+(dd-1)/365};
   for(const s of snaps){s.x=dec(s.date);s.bins=binsOf(s.ys);s.n=sum(s.ys)}
-  function drawMix(){
-    const host=$('#mix');host.innerHTML='';
-    const W=Math.max(300,host.clientWidth),narrow=W<600,H=narrow?240:330,L=narrow?40:56,R=16,T=10,B=28,share=STATE.mix==='share';
-    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Stacked area chart of code lines by age band at each monthly snapshot'},host);
+  function drawMix(host,share){
+    host.innerHTML='';
+    const W=Math.max(300,host.clientWidth),narrow=W<600,H=narrow?220:300,L=narrow?40:56,R=16,T=10,B=28;
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':`Stacked area chart of code ${share?'share':'lines'} by age band at each monthly snapshot`},host);
     const x0=snaps[0].x,x1=snaps[snaps.length-1].x,X=x=>L+(x-x0)/(x1-x0)*(W-L-R);
     const maxN=Math.max(...snaps.map(s=>s.n)),top=share?1:Math.ceil(maxN/niceStep(maxN,5))*niceStep(maxN,5);
     const Y=v=>H-B-v/top*(H-B-T);
@@ -253,8 +249,8 @@ fetch('data.json').then(r=>r.json()).then(D=>{
       const hide=()=>{cross.setAttribute('visibility','hidden');tip.hidden=true};
       hit.addEventListener('pointerleave',hide);hit.addEventListener('blur',hide)});
   }
-  for(const [id,mode] of [['#mix-share','share'],['#mix-abs','abs']])$(id).onclick=()=>{STATE.mix=mode;$('#mix-share').setAttribute('aria-pressed',mode==='share');$('#mix-abs').setAttribute('aria-pressed',mode==='abs');drawMix()};
-  drawMix();
+  const drawMixes=()=>{drawMix($('#mix-share'),true);drawMix($('#mix-abs'),false)};
+  drawMixes();
 
   // ---- survival: per cohort of lines that reached master in a year, share left relative to the next January
   const curves=SURV_COHORTS.map(c=>{
@@ -287,7 +283,7 @@ fetch('data.json').then(r=>r.json()).then(D=>{
       const s=el('tspan',{dx:6},t);s.textContent=e.c.half!=null?`${narrow?'':'half-life '}${e.c.half.toFixed(1)} ${narrow?'y':'years'}`:narrow?'> 50%':'over 50% left';s.setAttribute('style','font-weight:400;fill:var(--muted)')}
   }
   drawSurv();
-  let lastW=0;new ResizeObserver(([e])=>{const w=Math.round(e.contentRect.width);if(w!==lastW){lastW=w;drawMix();drawSurv()}}).observe($('#mix'));
+  let lastW=0;new ResizeObserver(([e])=>{const w=Math.round(e.contentRect.width);if(w!==lastW){lastW=w;drawMixes();drawSurv()}}).observe($('#mix-share'));
 
   // ---- today's cohort columns
   const max=Math.max(...all),cstep=niceStep(max,4),top=Math.ceil(max/cstep)*cstep;
