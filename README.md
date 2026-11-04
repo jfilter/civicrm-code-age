@@ -93,9 +93,9 @@ deletes cached steps it no longer uses, such as the step from the last first of 
   after the commit that brought the line in. Releases are the tags `X.Y.0` and the monthly `4.7.x`, release
   branches without such a tag as release candidates `X.Y (rc)`, and before 4.3 the SVN branches `vX.Y`.
 - **Authors** are the commit authors blame names; a moved or reformatted line keeps its author, a copy keeps
-  the author of the original, or for "Unknown (copied code)" when blame cannot place the original. On the
-  release and people pages a copy also keeps the year and release of the original; on the code age page it is
-  new code of the year it was made. Identities with the same e-mail address or full name are one author, and so is
+  the author of the original. When blame cannot place the original, the copy counts in the totals but under
+  no person. On the release and people pages a copy also keeps the year and release of the original; on the
+  code age page it is new code of the year it was made. Identities with the same e-mail address or full name are one author, and so is
   an address whose local part spells a full name. [`mailmap`](mailmap) joins identities that share neither,
   each backed by the GitHub account whose pull requests carry their commits.
 

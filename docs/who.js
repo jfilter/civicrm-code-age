@@ -31,7 +31,9 @@ function loadWho(){
     const first=D.snapshots[0].date,total=sum(A.map(a=>a.alive));
     // releases branched before the first snapshot lost lines nobody counted
     R.forEach((r,i)=>r.partial=i>0?R[i-1].at<first:r.at<first);
-    const ranked=[...A].sort((a,b)=>b.alive-a.alive);
+    // copies of unknown origin count in the totals but are no person, so they stay out of every list
+    for(const r of R){r.authors.delete(W.unknown);r.authorsAlive.delete(W.unknown)}
+    const ranked=A.filter(a=>a.i!==W.unknown).sort((a,b)=>b.alive-a.alive);
     const needed=share=>{let acc=0;for(let k=0;k<ranked.length;k++){acc+=ranked[k].alive;if(acc>=share*total)return k+1}};
     $('#foot').innerHTML=`Data: civicrm-core ${D.meta.ref} as of ${long(D.meta.head[1])} (commit ${D.meta.head[0]}). Code and method: <a href="https://github.com/jfilter/civicrm-code-age">github.com/jfilter/civicrm-code-age</a>.`;
     return {D,W,R,A,NY,first,total,ranked,needed,areaNames};
@@ -39,7 +41,7 @@ function loadWho(){
 }
 
 const METHOD=first=>[
-  `Each line is followed month by month as on the <a href="./">code age page</a>. Its author is the author of the commit that blame names for it; a line moved or reformatted keeps its author, a copy of code that is still there keeps the author of the original. Where blame cannot place the original, such as code copied from a side branch and changed on master since, the copy counts for "Unknown (copied code)". On this page a copy also keeps the year and release of the original, so it counts where its author wrote it; on the code age page it is new code of the year it was made.`,
+  `Each line is followed month by month as on the <a href="./">code age page</a>. Its author is the author of the commit that blame names for it; a line moved or reformatted keeps its author, a copy of code that is still there keeps the author of the original. Where blame cannot place the original, such as code copied from a side branch and changed on master since, the copy counts in the totals but for no person. On this page a copy also keeps the year and release of the original, so it counts where its author wrote it; on the code age page it is new code of the year it was made.`,
   `A line's release is the first release, in version order, that ships it: releases from 4.3 on are the tags <span class="mono">X.Y.0</span> and the monthly <span class="mono">4.7.x</span>, a release branch without such a tag is its release candidate, earlier releases are the SVN branches <span class="mono">vX.Y</span>. A release ships master up to the commit it branched from. Fixes made only on a release branch count for the next release that merges them into master.`,
   `Lines brought in are counted from ${first}, the first snapshot. Before that date the counts only hold what was still there on it, so for releases before 1.5 and for 2004 and 2005 they are lower bounds.`,
   `Identities with the same e-mail address or the same full name are one author, and so is an address whose local part spells a full name (<span class="mono">jane.doe@</span>). Names are shown as the author wrote them most often. Commits by shared accounts such as "CiviCRM" or "mover" stay under that name.`,

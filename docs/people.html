@@ -66,7 +66,7 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames})=>{
     [fmt(living.length),'people with code in core today'],
     [half,'people wrote half of it'],
     [needed(.8),'people wrote 80%'],
-    [fmt(A.filter(a=>recent(a)).length),`people brought in code in ${Y0+NY-2} or ${Y0+NY-1}`],
+    [fmt(ranked.filter(a=>recent(a)).length),`people brought in code in ${Y0+NY-2} or ${Y0+NY-1}`],
   ].map(([b,s])=>`<div class="tile"><b>${b}</b><span>${s}</span></div>`).join('');
   $('#p-legend').innerHTML=bandLegend();
 
@@ -89,10 +89,11 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames})=>{
   }
   function renderPeople(){
     const whole=P.group==='All'&&!P.area;
-    const rows=scoped().filter(x=>x.alive||(whole&&x.a.intro));
+    // totals include copies of unknown origin, the list only people
+    const scope=scoped(),all=sum(scope.map(x=>x.alive)),rows=scope.filter(x=>x.i!==W.unknown&&(x.alive||(whole&&x.a.intro)));
     const key={alive:x=>x.alive,intro:x=>x.a.intro,recent:x=>recent(x.a),left:x=>x.a.intro>=1000?x.a.alive/x.a.intro:-1}[P.sort];
     rows.sort((x,y)=>key(y)-key(x)||y.alive-x.alive);
-    const all=sum(rows.map(x=>x.alive)),shown=P.all?rows:rows.slice(0,40);
+    const shown=P.all?rows:rows.slice(0,40);
     $('#people').innerHTML=`<p>${fmt(rows.filter(x=>x.alive).length)} people with ${fmt(all)} lines here today.${P.sort==='left'?' Share ranked among authors who wrote at least 1,000 lines.':''}${whole?'':' Active, Written and Left count all of a person’s code, not only this area.'}</p>`+
       '<div class="rows people"><div class="row head" aria-hidden="true"><span></span><span>Author</span><span class="bar"></span><span class="sp">Active</span><span class="n">Today</span><span class="n w">Written</span><span class="med">Left</span></div>'+
       shown.map((x,k)=>{const open=P.open.has(x.i),b=binsOf(x.ys);

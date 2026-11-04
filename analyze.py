@@ -530,18 +530,17 @@ def main():
     rel, (author, names) = release_of(rels), authors(args.ref)
     author[None] = len(names)
     names.append("Unknown (copied code)")
-    who = [(rel(pos), author[c], year - Y0) for year, c, pos in ORIGINS]
-    # brought in: in the year the commit landed, which for a copy is the year of its source
-    brought = [(r, a, (y if c is None else LANDED[c][0] - Y0)) for (r, a, y), (_, c, _) in zip(who, ORIGINS)]
+    # the year the commit landed, which for a copy is the year of its source line
+    who = [(rel(pos), author[c], (year if c is None else LANDED[c][0]) - Y0) for year, c, pos in ORIGINS]
     alive = []
     for p, ids in sorted(state.items()):
         per = collections.Counter(who[i] for i in ids)
         alive.append([p, [x for k, n in sorted(per.items()) for x in (*k, n)]])
     introduced = collections.Counter()
     for i, n in INTRODUCED.items():
-        introduced[brought[i]] += n
+        introduced[who[i]] += n
     with open(args.out.with_name("who.json"), "w") as f:
-        json.dump({"releases": [[name, at, released] for name, _, at, released in rels], "authors": names,
+        json.dump({"releases": [[name, at, released] for name, _, at, released in rels], "authors": names, "unknown": author[None],
                    "files": alive, "introduced": [[*k, n] for k, n in sorted(introduced.items())],
                    "months": months}, f, separators=(",", ":"))
 
