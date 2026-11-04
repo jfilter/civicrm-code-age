@@ -94,7 +94,8 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames,hidden})=>{
     const key={alive:x=>x.alive,intro:x=>x.a.intro,recent:x=>recent(x.a),left:x=>x.a.intro>=1000?x.a.alive/x.a.intro:-1}[P.sort];
     rows.sort((x,y)=>key(y)-key(x)||y.alive-x.alive);
     const shown=P.all?rows:rows.slice(0,40);
-    $('#people').innerHTML=`<p>${fmt(rows.filter(x=>x.alive).length)} people with ${fmt(all)} lines here today.${P.sort==='left'?' Share ranked among authors who wrote at least 1,000 lines.':''}${whole?'':' Active, Written and Left count all of a person’s code, not only this area.'}</p>`+
+    const alive=rows.filter(x=>x.alive).length;
+    $('#people').innerHTML=`<p>${fmt(alive)} people with ${fmt(all)} lines here today.${rows.length>alive?` ${fmt(rows.length-alive)} more brought in code that is all gone.`:''}${P.sort==='left'?' Share ranked among authors who wrote at least 1,000 lines.':''}${whole?'':' Active, Written and Left count all of a person’s code, not only this area.'}</p>`+
       '<div class="rows people"><div class="row head" aria-hidden="true"><span></span><span>Author</span><span class="bar"></span><span class="sp">Active</span><span class="n">Today</span><span class="n w">Written</span><span class="med">Left</span></div>'+
       shown.map((x,k)=>{const open=P.open.has(x.i),b=binsOf(x.ys);
         return `<button class="row" aria-expanded="${open}" data-i="${x.i}" data-k="${k}"><span class="rank">${k+1}</span><span class="name" title="${esc(x.a.name)}">${esc(x.a.name)}</span>`+
@@ -142,7 +143,7 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames,hidden})=>{
     const relSpan=rels.length?` Brought in code from ${R[rels[0]].name} to ${R[rels[rels.length-1]].name}.`:'';
     return `<div class="open"><p>${fmt(a.alive)} of ${fmt(a.intro)} lines still there (${a.intro?pct(a.alive,a.intro):'–'}). ${span(a)}.${relSpan}</p>${activityHTML(a)}<div class="pcols">`+
       `<div class="mini"><div class="cap">Areas of their code today · select one for its files</div>${areasHTML(i)}</div>`+
-      mini(topN(a.rels,8),'Releases they brought most lines into',r=>relTitle(R[r]),r=>relHref(R[r]))+'</div></div>';
+      mini(topN(a.rels,8),'Releases they brought most lines into',r=>R[r].name==='master'?'next, unreleased':'CiviCRM '+R[r].name,r=>relHref(R[r]))+'</div></div>';
   }
   const refocus=sel=>{const b=document.querySelector(sel);b&&b.focus()};
   $('#people').onclick=e=>{

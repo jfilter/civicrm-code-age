@@ -122,11 +122,12 @@ nav.pages a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;bord
 .detail{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:12px}
 .detail h3{margin:0;font-size:1rem}
 .detail .cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.mini{display:grid;gap:3px}
-.mini .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,8rem) 4.5rem;gap:10px;align-items:center;font-size:.82rem}
+.mini{display:grid;grid-template-columns:minmax(0,max-content) minmax(3rem,1fr) auto;gap:3px 10px}
+.mini .r{display:grid;grid-column:1/-1;grid-template-columns:subgrid;align-items:center;font-size:.82rem}
 .mini .r>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mini .r>span:last-child{text-align:right;font-family:var(--mono);font-size:.78rem;color:var(--fg2);font-variant-numeric:tabular-nums}
 .mini .r .bar{height:9px}
+.mini .cap,.mini>.arows{grid-column:1/-1}
 .mini .cap{font:600 .78rem var(--sans);color:var(--muted);margin-bottom:2px}
 .people .row{grid-template-columns:2.2rem minmax(0,12rem) minmax(0,1fr) 14rem 5.5rem 5.5rem 3.5rem}
 .people .sp{font:600 .78rem var(--sans);color:var(--muted);padding-left:28px}

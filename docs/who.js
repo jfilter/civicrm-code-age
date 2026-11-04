@@ -23,7 +23,7 @@ function loadWho(){
     for(const r of R){r.ys=Array(NY).fill(0);r.intro=0;r.authors=new Map();r.authorsAlive=new Map();r.areas=new Map()}
     const areaNames=new Set();
     for(const [p,t] of W.files){
-      const area=areaOf(p);areaNames.add(area);
+      const area=areaOf(p);if(t.length)areaNames.add(area);
       for(let i=0;i<t.length;i+=4){const r=t[i],a=t[i+1],y=t[i+2],n=t[i+3];
         R[r].ys[y]+=n;A[a].ys[y]+=n;inc(A[a].areas,area,n);inc(R[r].authorsAlive,a,n);inc(R[r].areas,area,n)}}
     for(const [r,a,y,n] of W.introduced){R[r].intro+=n;A[a].intro+=n;A[a].introYs[y]+=n;inc(R[r].authors,a,n);inc(A[a].rels,r,n)}
