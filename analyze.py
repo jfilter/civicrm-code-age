@@ -273,7 +273,8 @@ def step(state, prev, commit, files, rows, stats):
 
     # A changed line from before the range is a move when it traces to a line that vanished in this step. Else, in
     # a file an ignored commit changed, it is a rewrite that takes the year of a line its hunk removed; else new.
-    # A copy keeps the author of the copied line and lands at the end of this step.
+    # A copy is new code of this year, but keeps the commit and landing position, hence author and release, of its
+    # source line.
     rest = []
     for p, j, (c, fn, o), removed in fresh:
         year, pos = landed(c.lstrip("^"), f"{p} at {commit[:10]}")
@@ -291,8 +292,8 @@ def step(state, prev, commit, files, rows, stats):
     for p, j, src, removed in rest:
         i = take(removed)
         if i is None:
-            # a copy keeps the commit, hence the author, of its source; None when the source line is unknown
-            i = introduce(None if src is None else ORIGINS[src][1], now, here)
+            # a copy whose source line is unknown has no commit and lands at the end of this step
+            i = introduce(None, now, here) if src is None else introduce(ORIGINS[src][1], now, ORIGINS[src][2])
             stats["copied" if src is not None else "copied from unknown"] += 1
         else:
             stats["rewritten"] += 1
@@ -530,13 +531,15 @@ def main():
     author[None] = len(names)
     names.append("Unknown (copied code)")
     who = [(rel(pos), author[c], year - Y0) for year, c, pos in ORIGINS]
+    # brought in: in the year the commit landed, which for a copy is the year of its source
+    brought = [(r, a, (y if c is None else LANDED[c][0] - Y0)) for (r, a, y), (_, c, _) in zip(who, ORIGINS)]
     alive = []
     for p, ids in sorted(state.items()):
         per = collections.Counter(who[i] for i in ids)
         alive.append([p, [x for k, n in sorted(per.items()) for x in (*k, n)]])
     introduced = collections.Counter()
     for i, n in INTRODUCED.items():
-        introduced[who[i]] += n
+        introduced[brought[i]] += n
     with open(args.out.with_name("who.json"), "w") as f:
         json.dump({"releases": [[name, at, released] for name, _, at, released in rels], "authors": names,
                    "files": alive, "introduced": [[*k, n] for k, n in sorted(introduced.items())],
