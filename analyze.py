@@ -513,7 +513,6 @@ def main():
     meta = {
         "head": git("log", "-1", "--format=%h|%ad", "--date=short", prev).strip().split("|"),
         "ref": args.ref,
-        "start": min(git("log", "--max-parents=0", "--format=%cs", prev).split()),  # first commit
         "y0": Y0,
         "y1": Y1,
         "ignored": ignored,
