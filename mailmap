@@ -1,0 +1,6 @@
+# Identities analyze.py cannot merge by e-mail or full name. Each entry is backed by the GitHub account
+# whose pull requests carry the commits.
+# ufundo: commits as ben@civicrm.org, ufundo@gmail.com, bw@ufundo.tech and without an address
+<ben@civicrm.org> <ufundo@gmail.com>
+<ben@civicrm.org> <bw@ufundo.tech>
+<ben@civicrm.org> <benjamin>

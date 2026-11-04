@@ -2,7 +2,7 @@ name: Update data
 
 on:
   schedule:
-    - cron: "17 3 2 * *" # the 2nd of each month, after the monthly snapshot on the 1st
+    - cron: "17 3 * * 1" # Mondays; a run blames only the months not cached yet and the tip
   workflow_dispatch:
 
 concurrency:
@@ -23,7 +23,7 @@ jobs:
       - name: Commit data
         id: commit
         run: |
-          git add docs/data.json docs/history.json cache
+          git add -A docs/data.json docs/history.json docs/who.json docs/og.png cache
           git diff --cached --quiet && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

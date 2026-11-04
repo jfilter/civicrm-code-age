@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CiviCRM People</title>
+<meta name="description" content="Who wrote the CiviCRM core code that is still there today, when they were active and in which areas.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CiviCRM People">
+<meta property="og:description" content="Who wrote the CiviCRM core code that is still there today, when they were active and in which areas.">
+<meta property="og:url" content="https://jfilter.github.io/civicrm-code-age/people.html">
+<meta property="og:image" content="https://jfilter.github.io/civicrm-code-age/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Lines of CiviCRM core code by age band, every month since 2006">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;750&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<main>
+  <header>
+    <nav class="pages" aria-label="Pages"><a href="./">Code age</a><a href="releases.html">Releases</a><a href="people.html" aria-current="page">People</a></nav>
+    <h1>Who wrote the code in CiviCRM?</h1>
+    <p class="lede" id="lede">Every line of CiviCRM core, traced to the person who wrote it.</p>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section aria-labelledby="h-people">
+    <h2 id="h-people">Whose code runs today</h2>
+    <p>Authors ranked by the lines of theirs that are still in core, coloured by the year each line reached master, with the years they brought code in. Pick an area to see who wrote it. Select a person for their activity, areas and releases.</p>
+    <div class="controls">
+      <div class="chips" id="pchips" role="group" aria-label="Area group"></div>
+      <label class="ctl" for="parea">Area
+        <select id="parea"></select>
+      </label>
+      <label class="ctl" for="psort">Sort
+        <select id="psort">
+          <option value="alive">Most lines today</option>
+          <option value="intro">Most lines written</option>
+          <option value="left">Largest share still there</option>
+          <option value="recent">Most lines this year and last</option>
+        </select>
+      </label>
+    </div>
+    <div class="legend" id="p-legend"></div>
+    <div id="people"></div>
+  </section>
+
+  <details>
+    <summary>Method and limitations</summary>
+    <ul id="method"></ul>
+  </details>
+  <p class="foot" id="foot"></p>
+</main>
+<div id="tip" hidden></div>
+
+<script src="common.js"></script>
+<script src="who.js"></script>
+<script>
+const P={group:'All',area:'',sort:'alive',all:false,open:new Set(),areas:new Set(),areasAll:new Set()};
+loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames})=>{
+  const living=ranked.filter(a=>a.alive),half=needed(.5),names=ranked.slice(0,half).map(a=>a.name);
+  const list=n=>n.length>1?n.slice(0,-1).join(', ')+' and '+n[n.length-1]:n[0];
+  const recent=a=>a.introYs[NY-1]+a.introYs[NY-2];
+  $('#lede').textContent=`Today's ${(total/1e6).toLocaleString('en-US',{maximumFractionDigits:1})} million lines of CiviCRM core were written by ${fmt(living.length)} people. ${half===1?'One person':['','','Two','Three','Four','Five'][half]||half+' people'} wrote half of them: ${list(names)}.`;
+  $('#tiles').innerHTML=[
+    [fmt(living.length),'people with code in core today'],
+    [half,'people wrote half of it'],
+    [needed(.8),'people wrote 80%'],
+    [fmt(A.filter(a=>recent(a)).length),`people brought in code in ${Y0+NY-2} or ${Y0+NY-1}`],
+  ].map(([b,s])=>`<div class="tile"><b>${b}</b><span>${s}</span></div>`).join('');
+  $('#p-legend').innerHTML=bandLegend();
+
+  // ---- people
+  const groups=['All','CRM','Civi','ext','templates','api','tests','Other'];
+  $('#pchips').innerHTML=groups.map(g=>`<button class="chip" data-g="${g}" aria-pressed="${g===P.group}">${g}</button>`).join('');
+  const fillAreas=()=>{const as=[...areaNames].filter(a=>P.group==='All'||groupOf(a)===P.group).sort();
+    if(!as.includes(P.area))P.area='';
+    $('#parea').innerHTML=`<option value="">All areas${P.group==='All'?'':' in '+P.group}</option>`+as.map(a=>`<option${a===P.area?' selected':''}>${esc(a)}</option>`).join('')};
+  $('#pchips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;P.group=b.dataset.g;P.all=false;document.querySelectorAll('#pchips .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));fillAreas();renderPeople()};
+  $('#parea').onchange=e=>{P.area=e.target.value;P.all=false;renderPeople()};
+  $('#psort').onchange=e=>{P.sort=e.target.value;renderPeople()};
+  // alive lines per author within the chosen area or group; written lines are only known per release, not per area
+  function scoped(){
+    if(P.group==='All'&&!P.area)return A.map((a,i)=>({a,i,ys:a.ys,alive:a.alive}));
+    const by=new Map();
+    for(const [p,t] of W.files){const area=areaOf(p);if(P.area?area!==P.area:groupOf(area)!==P.group)continue;
+      for(let k=0;k<t.length;k+=4){const a=t[k+1];if(!by.has(a))by.set(a,Array(NY).fill(0));by.get(a)[t[k+2]]+=t[k+3]}}
+    return [...by].map(([i,ys])=>({a:A[i],i,ys,alive:sum(ys)}));
+  }
+  function renderPeople(){
+    const whole=P.group==='All'&&!P.area;
+    const rows=scoped().filter(x=>x.alive||(whole&&x.a.intro));
+    const key={alive:x=>x.alive,intro:x=>x.a.intro,recent:x=>recent(x.a),left:x=>x.a.intro>=1000?x.a.alive/x.a.intro:-1}[P.sort];
+    rows.sort((x,y)=>key(y)-key(x)||y.alive-x.alive);
+    const all=sum(rows.map(x=>x.alive)),shown=P.all?rows:rows.slice(0,40);
+    $('#people').innerHTML=`<p>${fmt(rows.filter(x=>x.alive).length)} people with ${fmt(all)} lines here today.${P.sort==='left'?' Share ranked among authors who wrote at least 1,000 lines.':''}${whole?'':' Active, Written and Left count all of a person’s code, not only this area.'}</p>`+
+      '<div class="rows people"><div class="row head" aria-hidden="true"><span></span><span>Author</span><span class="bar"></span><span class="sp">Active</span><span class="n">Today</span><span class="n w">Written</span><span class="med">Left</span></div>'+
+      shown.map((x,k)=>{const open=P.open.has(x.i),b=binsOf(x.ys);
+        return `<button class="row" aria-expanded="${open}" data-i="${x.i}" data-k="${k}"><span class="rank">${k+1}</span><span class="name" title="${esc(x.a.name)}">${esc(x.a.name)}</span>`+
+          `<span class="bar" aria-hidden="true">${b.map((v,j)=>v?`<div style="flex:${v};background:var(${BINS[j].c})"></div>`:'').join('')}</span><span class="sp" title="${esc(span(x.a))}">${spark(x.a.introYs)}</span>`+
+          `<span class="n">${fmt(x.alive)}${whole?'':' · '+pct(x.alive,all,0)}</span><span class="n w">${fmt(x.a.intro)}</span><span class="med">${x.a.intro?pct(x.a.alive,x.a.intro,0):'–'}</span></button>`+(open?personHTML(x.a,x.i):'')}).join('')+'</div>'+
+      (rows.length>shown.length?`<button class="toggle more" id="pmore">Show all ${fmt(rows.length)}</button>`:'');
+    const more=$('#pmore');if(more)more.onclick=()=>{P.all=true;renderPeople();refocus('#people button.row[data-k="40"]')};
+  }
+  // one author's code per area and file, with each one's age and the author's share of it; built on first use
+  const areaTot=new Map(),fileTot=new Map(),mine=new Map();
+  for(const [p,t] of W.files){let n=0;for(let k=3;k<t.length;k+=4)n+=t[k];fileTot.set(p,n);inc(areaTot,areaOf(p),n)}
+  function codeOf(i){
+    if(mine.has(i))return mine.get(i);
+    const areas=new Map();
+    for(const [p,t] of W.files)for(let k=0;k<t.length;k+=4)if(t[k+1]===i){
+      const name=areaOf(p);if(!areas.has(name))areas.set(name,{name,ys:Array(NY).fill(0),files:new Map()});
+      const ar=areas.get(name);if(!ar.files.has(p))ar.files.set(p,Array(NY).fill(0));ar.ys[t[k+2]]+=t[k+3];ar.files.get(p)[t[k+2]]+=t[k+3]}
+    const out=[...areas.values()].map(ar=>({...ar,n:sum(ar.ys),files:[...ar.files].map(([p,ys])=>({p,ys,n:sum(ys)})).sort((x,y)=>y.n-x.n)})).sort((x,y)=>y.n-x.n);
+    mine.set(i,out);return out;
+  }
+  function areasHTML(i){
+    const all=codeOf(i),shown=P.areasAll.has(i)?all:all.slice(0,10);
+    return `<div class="arows"><div class="arow head" aria-hidden="true"><span>Area</span><span class="bar"></span><span class="n">Lines</span><span class="n">Of area</span></div>`+
+      shown.map(ar=>{const key=i+'|'+ar.name,open=P.areas.has(key);
+        return `<button class="arow" aria-expanded="${open}" data-key="${esc(key)}"><span class="name" title="${esc(ar.name)}">${esc(ar.name)}</span>${ageBar(ar.ys)}<span class="n">${fmt(ar.n)}</span><span class="n">${pct(ar.n,areaTot.get(ar.name))}</span></button>`+
+          (open?'<div class="afiles">'+ar.files.slice(0,50).map(f=>`<div class="arow"><span class="name" title="${esc(f.p)}">${esc(f.p.slice(ar.name.length+1)||f.p)}</span>${ageBar(f.ys)}<span class="n">${fmt(f.n)}</span><span class="n">${pct(f.n,fileTot.get(f.p))}</span></div>`).join('')+
+            `<div class="note">${ar.files.length>50?`The 50 largest of ${fmt(ar.files.length)} files.`:`${fmt(ar.files.length)} file${ar.files.length===1?'':'s'}.`} "Of file" is their share of its lines today.</div></div>`:'')}).join('')+
+      (all.length>shown.length?`<button class="toggle amore" data-i="${i}">All ${fmt(all.length)} areas</button>`:'')+'</div>';
+  }
+  // lines brought in per year, scaled to the person's busiest year
+  const years=a=>a.introYs.map((v,y)=>[Y0+y,v]).filter(([,v])=>v);
+  const span=a=>{const y=years(a);return y.length?`Active ${y[0][0]}${y.length>1&&y[y.length-1][0]!==y[0][0]?'–'+y[y.length-1][0]:''}`:'No lines brought in since '+first.slice(0,4)};
+  const spark=ys=>{const m=Math.max(1,...ys);return `<svg viewBox="0 0 ${ys.length*4} 16" preserveAspectRatio="none" aria-hidden="true">${ys.map((v,j)=>v?`<rect x="${j*4}" y="${16-Math.max(2,16*v/m)}" width="3" height="${Math.max(2,16*v/m)}"/>`:'').join('')}</svg>`};
+  const bandOf=y=>BINS.findIndex(b=>y>=b.from&&y<=b.to);
+  function activityHTML(a){
+    const m=Math.max(1,...a.introYs,...a.ys),y=years(a),peak=y.reduce((p,q)=>q[1]>p[1]?q:p,[0,0]);
+    return `<div class="act"><div class="cap">Lines brought in per year, filled by what is still there</div>`+
+      `<div class="actcols" role="img" aria-label="${esc(span(a))}${peak[1]?`, most lines in ${peak[0]} (${fmt(peak[1])})`:''}">`+
+      a.introYs.map((v,j)=>{const h=Math.max(v,a.ys[j]);return `<div class="acol" title="${Y0+j}: ${fmt(v)} brought in, ${fmt(a.ys[j])} still there">`+
+        (h?`<div class="ain" style="height:${100*h/m}%"><div style="height:${100*a.ys[j]/h}%;background:var(${BINS[bandOf(Y0+j)].c})"></div></div>`:'')+'</div>'}).join('')+
+      `</div><div class="actx" aria-hidden="true">${a.introYs.map((_,j)=>`<span>${(Y0+j)%4===0?Y0+j:''}</span>`).join('')}</div></div>`;
+  }
+  function personHTML(a,i){
+    const rels=[...a.rels.keys()].filter(r=>r<R.length-1).sort((x,y)=>x-y);
+    const relSpan=rels.length?` Brought in code from ${R[rels[0]].name} to ${R[rels[rels.length-1]].name}.`:'';
+    return `<div class="open"><p>${fmt(a.alive)} of ${fmt(a.intro)} lines still there (${a.intro?pct(a.alive,a.intro):'–'}). ${span(a)}.${relSpan}</p>${activityHTML(a)}<div class="pcols">`+
+      `<div class="mini"><div class="cap">Areas of their code today · select one for its files</div>${areasHTML(i)}</div>`+
+      mini(topN(a.rels,8),'Releases they brought most lines into',r=>relTitle(R[r]),r=>relHref(R[r]))+'</div></div>';
+  }
+  const refocus=sel=>{const b=document.querySelector(sel);b&&b.focus()};
+  $('#people').onclick=e=>{
+    const ar=e.target.closest('button.arow'),more=e.target.closest('button.amore');
+    if(ar){const k=ar.dataset.key;P.areas.has(k)?P.areas.delete(k):P.areas.add(k);renderPeople();refocus(`#people button.arow[data-key="${CSS.escape(k)}"]`);return}
+    if(more){const i=+more.dataset.i;P.areasAll.add(i);renderPeople();const k=codeOf(i)[10];k&&refocus(`#people button.arow[data-key="${CSS.escape(i+'|'+k.name)}"]`);return}
+    const r=e.target.closest('button.row');if(!r)return;const i=+r.dataset.i;P.open.has(i)?P.open.delete(i):P.open.add(i);renderPeople();
+    const again=document.querySelector(`#people button.row[data-i="${i}"]`);again&&again.focus()};
+  fillAreas();renderPeople();
+
+
+  // people.html#Name opens that person, as linked from the releases page
+  const fromHash=()=>{const name=decodeURIComponent(location.hash.slice(1)),a=A.find(a=>a.name===name);if(!a)return;
+    P.group='All';P.area='';P.sort='alive';$('#psort').value='alive';document.querySelectorAll('#pchips .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.g==='All'));
+    fillAreas();P.all=ranked.indexOf(a)>=40;P.open.add(a.i);renderPeople();$(`#people button.row[data-i="${a.i}"]`).scrollIntoView({block:'start'})};
+  addEventListener('hashchange',fromHash);fromHash();
+  $('#method').innerHTML=METHOD(first).map(t=>`<li>${t}</li>`).join('');
+}).catch(err=>{$('#lede').textContent=`The data could not be loaded: ${err.message}`});
+</script>
+</body></html>

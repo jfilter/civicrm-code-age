@@ -12,6 +12,15 @@ code line of civicrm-core, including the SVN history back to 2004, and renders t
 The last two show the code on one date: today, or any monthly snapshot picked with the time slider or in
 the age mix charts. The URL keeps the month (`#2014-01`).
 
+Two more pages attribute today's code:
+
+- **Releases** (`releases.html`): per release what it brought in and how much of it is still there, newest
+  first and paged, with the upcoming release candidate and unreleased `master`; its authors and areas; and
+  the lines brought in and removed per month. `releases.html#6.18` opens a release.
+- **People** (`people.html`): who wrote the code alive today, ranked by lines still there, brought in, gone or
+  recent; per person the years they were active, their areas down to files and their releases.
+  `people.html#Name` opens a person.
+
 ## View
 
 **https://jfilter.github.io/civicrm-code-age/**, or locally:
@@ -21,8 +30,8 @@ python3 -m http.server -d docs 8000
 # open http://localhost:8000
 ```
 
-`docs/data.json` and `docs/history.json` are committed; the page loads them with `fetch`, so it needs a web
-server rather than `file://`. `history.json` holds the per-file counts of every snapshot as changes against
+`docs/data.json`, `docs/history.json` and `docs/who.json` are committed; the pages load them with `fetch`,
+so they need a web server rather than `file://`. `history.json` holds the per-file counts of every snapshot as changes against
 the one before, about 1.2 MB compressed, and loads after the page has rendered.
 
 ## Reproduce
@@ -37,7 +46,7 @@ the one before, about 1.2 MB compressed, and loads after the page has rendered.
 Needs `git` and Python 3.11+, nothing else. A run follows the code from one snapshot per month since
 `--first-year` (default 2006) to the branch tip and takes about 25 minutes on 10 cores without a cache. It keeps a bare clone
 in `cache/repo.git`, fetches the branch into it on every run, never writes to the source clone, and
-overwrites `docs/data.json` and `docs/history.json`.
+overwrites `docs/data.json`, `docs/history.json`, `docs/who.json` and the link preview image `docs/og.png`.
 
 Blame results are cached per month in `cache/<key>/` (`--cache` to move it), keyed by the blame code, the
 file filter and `ignore-revs.txt`, and committed, about 40 KB per month. A run blames only the months that are
@@ -45,9 +54,9 @@ not cached yet; a change to the blame, the filter or the ignore list starts a fr
 and blames everything again. Results blamed by different git versions can mix in the cache; blame changes
 rarely enough between versions that this does not move the numbers.
 
-[`.github/workflows/update.yml`](.github/workflows/update.yml) runs the analysis on the 2nd of every month,
-commits the new month's blame results and `docs/data.json`, and rebuilds the page. Start it by hand under
-Actions → Update data.
+[`.github/workflows/update.yml`](.github/workflows/update.yml) runs the analysis every Monday, commits the
+blame results and the data files, and rebuilds the page. Start it by hand under Actions → Update data. A run
+deletes cached steps it no longer uses, such as the step from the last first of the month to an earlier tip.
 
 ## Method
 
@@ -80,6 +89,15 @@ Actions → Update data.
   `CRM/Upgrade/*.msg_template/`, `DAO/` classes, `*.civix.php`,
   `CRM/Core/I18n/SchemaStructure*.php`, JSON, minified files) and the bundled
   code listed below. Files with third-party licence headers that remain make up about 0.2 % of today's lines.
+- **Releases.** A line belongs to the first release, in version order, whose branch forked from `master` at or
+  after the commit that brought the line in. Releases are the tags `X.Y.0` and the monthly `4.7.x`, release
+  branches without such a tag as release candidates `X.Y (rc)`, and before 4.3 the SVN branches `vX.Y`.
+- **Authors** are the commit authors blame names; a moved or reformatted line keeps its author, a copy keeps
+  the author of the original, or for "Unknown (copied code)" when blame cannot place the original. A copy
+  counts as brought in at the end of its month, so in the month a release branches, a copy made before the
+  branch point counts for the next release. Identities with the same e-mail address or full name are one author, and so is
+  an address whose local part spells a full name. [`mailmap`](mailmap) joins identities that share neither,
+  each backed by the GitHub account whose pull requests carry their commits.
 
 ## Excluded bundled code
 
@@ -111,12 +129,17 @@ the largest January 1st snapshot; for comparison, CiviCRM's own code had 280,675
 
 | Path | Purpose |
 |---|---|
-| `analyze.py` | Fetch, graft SVN history, blame each month in parallel, follow lines from snapshot to snapshot, write `docs/data.json` |
-| `.github/workflows/update.yml` | Monthly run that commits the cache and `docs/data.json` and rebuilds the page |
+| `analyze.py` | Fetch, graft SVN history, blame each month in parallel, follow lines from snapshot to snapshot, write the data files |
+| `.github/workflows/update.yml` | Weekly run that commits the cache and the data files and rebuilds the page |
 | `ignore-revs.txt` | Mechanical commits skipped by blame, each with date and subject |
-| `docs/index.html` | The page; no build step, no dependencies besides Google Fonts |
+| `mailmap` | Author identities joined by hand, in git's mailmap format |
+| `docs/index.html`, `releases.html`, `people.html` | The pages; no build step, no dependencies besides Google Fonts |
+| `docs/common.js`, `who.js`, `style.css` | Shared helpers, release and author totals, styles |
 | `cache/<key>/` | Blame results per month, so a run only blames new months |
-| `docs/data.json` | Generated data: per file and per snapshot, lines per year from 2004 |
+| `docs/data.json` | Generated: per file and per snapshot, lines per year from 2004 |
+| `docs/history.json` | Generated: per-file counts of every snapshot as changes against the one before |
+| `docs/who.json` | Generated: lines alive and brought in per release, author and year |
+| `docs/og.png` | Generated: link preview image, the age mix of every snapshot |
 
 ## License
 

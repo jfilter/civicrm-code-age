@@ -4,120 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CiviCRM Code Age</title>
+<meta name="description" content="How old is the code in CiviCRM core? Every line since 2004, followed month by month: age mix, survival and areas.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CiviCRM Code Age">
+<meta property="og:description" content="How old is the code in CiviCRM core? Every line since 2004, followed month by month: age mix, survival and areas.">
+<meta property="og:url" content="https://jfilter.github.io/civicrm-code-age/">
+<meta property="og:image" content="https://jfilter.github.io/civicrm-code-age/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Lines of CiviCRM core code by age band, every month since 2006">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;750&family=JetBrains+Mono:wght@400;600&display=swap">
-<style>
-/* Layout: one reading column; summary → age mix over time → survival → time slider over cohorts and per-area bars with file drilldown */
-:root{
-  --bg:#f7f8fa; --panel:#ffffff; --fg:#17202e; --fg2:#4a5568; --muted:#6b7585; --line:#dfe3ea; --hover:#eef2f8; --focus:#2a78d6;
-  --b0:#0d366b; --b1:#184f95; --b2:#2a78d6; --b3:#5598e7; --b4:#86b6ef;
-  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#15171b; --panel:#1c1f24; --fg:#e8ebf0; --fg2:#b4bcc8; --muted:#8e97a4; --line:#30353d; --hover:#252a31; --focus:#86b6ef;
-  --b0:#cde2fb; --b1:#86b6ef; --b2:#3987e5; --b3:#256abf; --b4:#184f95; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#15171b; --panel:#1c1f24; --fg:#e8ebf0; --fg2:#b4bcc8; --muted:#8e97a4; --line:#30353d; --hover:#252a31; --focus:#86b6ef;
-  --b0:#cde2fb; --b1:#86b6ef; --b2:#3987e5; --b3:#256abf; --b4:#184f95; color-scheme:dark}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);padding:32px 16px 64px}
-main{max-width:1040px;margin:0 auto;display:grid;gap:40px}
-h1{font-size:2rem;font-weight:750;letter-spacing:-.02em;margin:0;text-wrap:balance}
-h2{font-size:1.15rem;font-weight:650;margin:0;text-wrap:balance}
-p{margin:0;max-width:68ch;color:var(--fg2)}
-.mono{font-family:var(--mono);font-size:.82rem}
-header{display:grid;gap:10px}
-.lede{font-size:1.1rem;line-height:1.6;color:var(--fg)}
-.foot{font-size:.85rem;color:var(--muted)}
-.foot a{color:inherit}
-section{display:grid;gap:14px}
-.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.82rem;color:var(--fg2)}
-.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-.legend .q{color:var(--muted)}
-/* svg charts */
-.chart{position:relative;width:100%}
-.chart svg{display:block;width:100%;height:auto;overflow:visible}
-.chart text{font:12px var(--sans);font-variant-numeric:tabular-nums;fill:var(--muted)}
-.chart .lab{font:600 12px var(--sans);fill:var(--fg)}
-.chart .grid{stroke:var(--line);stroke-width:1}
-.chart .axis{stroke:var(--line);stroke-width:1}
-.chart .cross{stroke:var(--fg);stroke-width:1;opacity:.5}
-.chart .hit{fill:transparent;cursor:crosshair}
-.chart .hit:focus-visible{outline:none;stroke:var(--focus);stroke-width:2}
-/* cohort columns */
-.cols-wrap{overflow-x:auto}
-.cols{display:grid;grid-template-columns:44px 1fr;min-width:560px;padding-top:10px}
-.yaxis{position:relative;height:220px;font:.75rem var(--sans);font-variant-numeric:tabular-nums;color:var(--muted)}
-.yaxis span{position:absolute;right:8px;transform:translateY(50%)}
-.plot{position:relative;height:220px;display:flex;align-items:flex-end;gap:3px;border-bottom:1px solid var(--line)}
-.plot .gl{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.6;pointer-events:none}
-.col{flex:1;height:100%;display:flex;align-items:flex-end;position:relative}
-.col div{width:100%;border-radius:4px 4px 0 0;min-height:1px}
-.col:hover div,.col:focus-visible div{outline:2px solid var(--fg);outline-offset:1px}
-.xaxis{grid-column:2;display:flex;gap:3px;font:.72rem var(--sans);font-variant-numeric:tabular-nums;color:var(--muted);padding-top:4px}
-.xaxis span{flex:1;text-align:center}
-/* controls */
-.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip,select,.toggle{font:600 .8rem var(--sans);border:1px solid var(--line);background:var(--panel);color:var(--fg2);border-radius:999px;padding:5px 12px;cursor:pointer}
-select,.toggle{border-radius:8px}
-.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-button:focus-visible,select:focus-visible,.col:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-/* time slider stays visible while the cohorts and areas below it scroll */
-.when{display:grid;gap:40px}
-.timebar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
-.timebar input{flex:1 1 220px;min-width:0;accent-color:var(--b2)}
-.timebar output{font:600 .95rem var(--sans);font-variant-numeric:tabular-nums;min-width:10em}
-.timebar .btns{display:flex;gap:6px}
-.toggle:disabled,.timebar input:disabled{opacity:.6;cursor:default}
-.chart .sel{stroke:var(--fg);stroke-width:2}
-label.ctl{font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center}
-/* area rows */
-.rows{display:grid;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.row{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr) 5.5rem 3.5rem;gap:12px;align-items:center;padding:7px 12px;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;width:100%}
-.row:first-child{border-top:0}
-.row:hover{background:var(--hover)}
-.row .name{font-family:var(--mono);font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row .n,.row .med{font:.78rem var(--mono);color:var(--fg2);text-align:right;font-variant-numeric:tabular-nums}
-.row .med{color:var(--fg);font-weight:600}
-.head{cursor:default;font:600 .78rem var(--sans);color:var(--muted)}
-.head:hover{background:none}
-.bar{display:flex;gap:2px;height:14px;min-width:0}
-.bar div{height:100%;min-width:0}
-.bar div:first-child{border-radius:4px 0 0 4px}.bar div:last-child{border-radius:0 4px 4px 0}
-.bar div:only-child{border-radius:4px}
-.files{border-top:1px solid var(--line);padding:6px 12px 12px 24px;display:grid;gap:2px;background:var(--bg)}
-.files .row{border:0;padding:3px 0;cursor:default;grid-template-columns:minmax(0,1fr) minmax(0,14rem) 5.5rem 3.5rem}
-.files .row .bar{height:9px}
-.files .note{font-size:.78rem;color:var(--muted);padding-top:4px}
-table{border-collapse:collapse;width:100%;font-size:.82rem;background:var(--panel)}
-.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
-th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-th:first-child,td:first-child{text-align:left;font-family:var(--mono)}
-th{font:600 .78rem var(--sans);color:var(--muted)}
-#tip{position:fixed;z-index:10;pointer-events:none;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 24px rgb(0 0 0 / .18);max-width:300px}
-#tip b{font-family:var(--mono)}
-#tip .hint{color:var(--muted);margin-bottom:4px}
-#tip .r{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
-#tip .r i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
-details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
-summary{cursor:pointer;font-weight:600}
-details ul{margin:10px 0 0;padding-left:18px;color:var(--fg2);display:grid;gap:6px;max-width:75ch}
-details li{font-size:.88rem}
-@media (max-width:640px){
-  .row{grid-template-columns:minmax(0,1fr) 3.2rem;row-gap:4px}
-  .row .bar{grid-column:1/-1;grid-row:2}
-  .row .n{display:none}
-  .head .bar{display:none}
-  .files{padding-left:12px}
-  .files .row{grid-template-columns:minmax(0,1fr) 3.2rem}
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
   <header>
+    <nav class="pages" aria-label="Pages"><a href="./" aria-current="page">Code age</a><a href="releases.html">Releases</a><a href="people.html">People</a></nav>
     <h1>How old is the code in CiviCRM?</h1>
     <p class="lede" id="lede">Each line of CiviCRM core, dated by the year it was last changed.</p>
   </header>
@@ -191,40 +95,10 @@ details li{font-size:.88rem}
 </main>
 <div id="tip" hidden></div>
 
+<script src="common.js"></script>
 <script>
-const BINS=[
-  {lab:'≤ 2008',from:2004,to:2008,c:'--b0',note:'CiviCRM 1.x–2.1'},
-  {lab:'2009–2012',from:2009,to:2012,c:'--b1',note:'2.2–4.2'},
-  {lab:'2013–2017',from:2013,to:2017,c:'--b2',note:'4.3–4.7'},
-  {lab:'2018–2021',from:2018,to:2021,c:'--b3',note:'5.0–5.45'},
-  {lab:'2022 on',from:2022,to:2026,c:'--b4',note:'5.46 and later'}];
 const SURV_COHORTS=[2006,2010,2014,2018,2022];
-const fmt=n=>n.toLocaleString('en-US');
-const pct=(a,b)=>b?(100*a/b).toLocaleString('en-US',{maximumFractionDigits:a/b<.1?1:0})+'%':'–';
-const $=s=>document.querySelector(s);
-const NS='http://www.w3.org/2000/svg';
-const tip=$('#tip');
-let Y0,STATE={group:'All',sort:'med',table:false,open:new Set()};
-
-const sum=a=>a.reduce((x,y)=>x+y,0);
-function binsOf(ys){return BINS.map(b=>{let s=0;for(let y=b.from;y<=b.to;y++)s+=ys[y-Y0]||0;return s})}
-function median(ys){const t=sum(ys);let acc=0;for(let i=0;i<ys.length;i++){acc+=ys[i];if(acc>=t/2)return Y0+i}return null}
-function areaOf(p){
-  const s=p.split('/');
-  if(s[0]==='tests'){const r=s[1]==='phpunit'?s.slice(2):s.slice(1);return 'tests/'+(r.length>2?r.slice(0,2):r.slice(0,1)).join('/')}
-  if(s[0]==='templates'&&s[1]==='CRM'&&s.length>3)return s.slice(0,3).join('/');
-  if(s.length>2&&['CRM','Civi','ext','ang','js','api','css','xml','install','setup'].includes(s[0]))return s.slice(0,2).join('/');
-  return s.length>1?s[0]:'(root)';
-}
-function groupOf(a){const g=a.split('/')[0];return ['CRM','Civi','ext','templates','api','tests'].includes(g)?g:'Other'}
-function barHTML(bins,label){
-  return '<div class="bar" aria-hidden="true">'+bins.map((v,i)=>v?`<div data-tip="${i}" data-label="${label}" style="flex:${v};background:var(${BINS[i].c})"></div>`:'').join('')+'</div>';
-}
-function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e}
-function showTip(html,x,y){tip.innerHTML=html;tip.hidden=false;const r=tip.getBoundingClientRect();
-  tip.style.left=Math.max(8,Math.min(x+14,innerWidth-r.width-8))+'px';tip.style.top=(y+r.height+20>innerHeight?y-r.height-12:y+14)+'px'}
-const swatch=i=>`<i style="background:var(${BINS[i].c})"></i>`;
-const niceStep=(max,n)=>{const raw=max/n,p=10**Math.floor(Math.log10(raw));return [1,2,2.5,5,10].map(m=>m*p).find(s=>s>=raw)};
+let STATE={group:'All',sort:'med',table:false,open:new Set()};
 
 fetch('data.json').then(r=>r.json()).then(D=>{
   Y0=D.meta.y0;BINS[BINS.length-1].to=D.meta.y1;const NY=D.meta.y1-Y0+1;
@@ -259,7 +133,7 @@ fetch('data.json').then(r=>r.json()).then(D=>{
       const d='M'+snaps.map((s,j)=>`${X(s.x)},${Y(hi[j])}`).join('L')+'L'+snaps.map((s,j)=>`${X(s.x)},${Y(lo[j])}`).reverse().join('L')+'Z';
       el('path',{d,fill:`var(${b.c})`,stroke:'var(--bg)','stroke-width':1.5,'stroke-linejoin':'round'},svg);
       hi.forEach((v,j)=>base[j]=v)});
-    const sel=el('line',{y1:T,y2:H-B,class:'sel'},svg),mark=()=>{sel.setAttribute('x1',X(snaps[TI].x));sel.setAttribute('x2',X(snaps[TI].x))};
+    const sel=el('line',{y1:T,y2:H-B,class:'sel'},svg),mark=()=>{sel.setAttribute('x1',X(snaps[TI].x));sel.setAttribute('x2',X(snaps[TI].x));sel.setAttribute('visibility',TI===snaps.length-1?'hidden':'visible')};
     selMarks.push(mark);mark();
     const cross=el('line',{y1:T,y2:H-B,class:'cross',visibility:'hidden'},svg);
     snaps.forEach((s,j)=>{
@@ -272,7 +146,7 @@ fetch('data.json').then(r=>r.json()).then(D=>{
         showTip(`<b>${s.label==='today'?'Today, '+s.date:s.date}</b><div class="hint">Click to see this date below</div><div class="r"><span>All lines</span><span>${fmt(s.n)}</span></div>`+
           BINS.map((b,i)=>({b,i})).reverse().filter(({i})=>s.bins[i]).map(({b,i})=>`<div class="r"><span>${swatch(i)}${b.lab}</span><span>${fmt(s.bins[i])} · ${pct(s.bins[i],s.n)}</span></div>`).join(''),cx,cy)};
       hit.addEventListener('pointermove',e=>show(e.clientX,e.clientY));
-      hit.addEventListener('focus',()=>{const r=hit.getBoundingClientRect();show(r.left+r.width/2,r.top+40)});
+      hit.addEventListener('focus',()=>{const r=hit.getBoundingClientRect();show(r.left+r.width/2,r.top+40);say(tip.innerText)});
       const hide=()=>{cross.setAttribute('visibility','hidden');tip.hidden=true};
       hit.addEventListener('pointerleave',hide);hit.addEventListener('blur',hide)});
   }
@@ -320,7 +194,7 @@ fetch('data.json').then(r=>r.json()).then(D=>{
     const toSvg=e=>{const r=svg.getBoundingClientRect(),k=W/r.width;return [(e.clientX-r.left)*k,(e.clientY-r.top)*k]};
     hit.addEventListener('pointermove',e=>{const [x,y]=toSvg(e);show((x-L)/(W-L-R)*tMax,y,e.clientX,e.clientY)});
     hit.addEventListener('pointerleave',hide);hit.addEventListener('blur',hide);
-    const key=()=>{const r=hit.getBoundingClientRect();show(at,null,r.left+(X(at)-L)/(W-L-R)*r.width,r.top+20)};
+    const key=()=>{const r=hit.getBoundingClientRect();show(at,null,r.left+(X(at)-L)/(W-L-R)*r.width,r.top+20);say(tip.innerText)};
     hit.addEventListener('focus',()=>{at??=0;key()});
     hit.addEventListener('keydown',e=>{
       const d={ArrowRight:1,ArrowLeft:-1}[e.key],v={ArrowUp:-1,ArrowDown:1}[e.key];if(!d&&!v)return;e.preventDefault();
