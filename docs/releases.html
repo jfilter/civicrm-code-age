@@ -81,7 +81,7 @@ loadWho().then(({D,W,R,A,NY,first,total})=>{
     const host=$('#rel');host.innerHTML='';
     const W2=Math.max(300,host.clientWidth),narrow=W2<600,H=narrow?220:300,L=narrow?40:56,Rm=8,T=10,B=28;
     const svg=el('svg',{viewBox:`0 0 ${W2} ${H}`,role:'img','aria-label':'Column chart of the lines each release brought in and how many are still there'},host);
-    const max=Math.max(...R.map(r=>Math.max(r.intro,r.alive))),st=niceStep(max,4),tp=Math.ceil(max/st)*st;
+    const max=Math.max(...R.map(r=>Math.max(r.intro,r.alive))),[st,tp]=niceAxis(max,4,7);
     const bw=(W2-L-Rm)/R.length,X=i=>L+i*bw,Y=v=>H-B-v/tp*(H-B-T);
     for(let v=0;v<=tp;v+=st){el('line',{x1:L,x2:W2-Rm,y1:Y(v),y2:Y(v),class:'grid'},svg);el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=v?fmt(v/1000)+'k':'0'}
     let lastLab=-1e9;
@@ -147,11 +147,11 @@ loadWho().then(({D,W,R,A,NY,first,total})=>{
     const W2=Math.max(300,host.clientWidth),narrow=W2<600,H=narrow?240:300,L=narrow?40:56,Rm=8,T=22,B=26;
     const svg=el('svg',{viewBox:`0 0 ${W2} ${H}`,role:'img','aria-label':'Diverging column chart of lines brought in and removed per month'},host);
     const x0=dec(M[0].d)-1/12,x1=dec(M[M.length-1].d),X=x=>L+(x-x0)/(x1-x0)*(W2-L-Rm),bw=(W2-L-Rm)/((x1-x0)*12);
-    const mx=Math.max(...M.map(m=>Math.max(m.add,m.rem))),st=niceStep(mx,2),tp=Math.ceil(mx/st)*st;
+    const mx=Math.max(...M.map(m=>Math.max(m.add,m.rem))),[st,tp]=niceAxis(mx,2,4);
     const mid=(T+H-B)/2,Y=v=>mid-v/tp*(mid-T);
-    for(let v=-tp;v<=tp;v+=st){el('line',{x1:L,x2:W2-Rm,y1:Y(v),y2:Y(v),class:v?'grid':'axis'},svg);el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=v?fmt(Math.abs(v)/1000)+'k':'0'}
+    for(let v=-tp;v<=tp;v+=st){el('line',{x1:L,x2:W2-Rm,y1:Y(v),y2:Y(v),class:v?'grid':'axis'},svg);el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=v?(v<0?'−':'')+fmt(Math.abs(v)/1000)+'k':'0'}
     for(let y=Math.ceil(x0);y<=x1;y+=narrow?5:2)el('text',{x:X(y),y:H-6,'text-anchor':'middle'},svg).textContent=y;
-    for(const r of majors){const x=X(dec(r.at));if(x<L)continue;el('line',{x1:x,x2:x,y1:T-6,y2:T,stroke:'var(--muted)'},svg);el('text',{x,y:T-9,'text-anchor':'middle'},svg).textContent=r.name}
+    let lx=-1/0;for(const r of majors){const x=X(dec(r.at));if(x<L)continue;el('line',{x1:x,x2:x,y1:T-6,y2:T,stroke:'var(--muted)'},svg);const t=el('text',{x,y:T-9,'text-anchor':'middle'},svg);t.textContent=r.name;const b=t.getBBox();if(b.x<lx+2)t.remove();else lx=b.x+b.width}
     M.forEach(m=>{const x=X(dec(m.d))-bw,w=Math.max(1,bw-(bw>3?1:0));
       el('rect',{x,y:Y(m.add),width:w,height:mid-Y(m.add),fill:'var(--b2)'},svg);
       el('rect',{x,y:mid,width:w,height:Y(-m.rem)-mid,fill:'var(--muted)'},svg)});

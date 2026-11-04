@@ -118,11 +118,11 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames,hidden})=>{
   }
   function areasHTML(i){
     const all=codeOf(i),shown=P.areasAll.has(i)?all:all.slice(0,10);
-    return `<div class="arows"><div class="arow head" aria-hidden="true"><span>Area</span><span class="bar"></span><span class="n">Lines</span><span class="n">Of area</span></div>`+
+    return `<div class="arows"><div class="arow head" aria-hidden="true"><span>Area</span><span class="bar"></span><span class="n">Lines</span><span class="n">Share of area</span></div>`+
       shown.map(ar=>{const key=i+'|'+ar.name,open=P.areas.has(key);
-        return `<button class="arow" aria-expanded="${open}" data-key="${esc(key)}"><span class="name" title="${esc(ar.name)}">${esc(ar.name)}</span>${ageBar(ar.ys)}<span class="n">${fmt(ar.n)}</span><span class="n">${pct(ar.n,areaTot.get(ar.name))}</span></button>`+
-          (open?'<div class="afiles">'+ar.files.slice(0,50).map(f=>`<div class="arow"><span class="name" title="${esc(f.p)}">${esc(f.p.slice(ar.name.length+1)||f.p)}</span>${ageBar(f.ys)}<span class="n">${fmt(f.n)}</span><span class="n">${pct(f.n,fileTot.get(f.p))}</span></div>`).join('')+
-            `<div class="note">${ar.files.length>50?`The 50 largest of ${fmt(ar.files.length)} files.`:`${fmt(ar.files.length)} file${ar.files.length===1?'':'s'}.`} "Of file" is their share of its lines today.</div></div>`:'')}).join('')+
+        return `<button class="arow" aria-expanded="${open}" data-key="${esc(key)}"><span class="name" title="${esc(ar.name)}">${esc(ar.name)}</span>${ageBar(ar.ys)}<span class="n">${fmt(ar.n)}</span><span class="n" title="${fmt(ar.n)} of the ${fmt(areaTot.get(ar.name))} lines in ${esc(ar.name)} today">${pct(ar.n,areaTot.get(ar.name))}</span></button>`+
+          (open?'<div class="afiles">'+ar.files.slice(0,50).map(f=>`<div class="arow"><span class="name" title="${esc(f.p)}">${esc(inArea(f.p))}</span>${ageBar(f.ys)}<span class="n">${fmt(f.n)}</span><span class="n" title="${fmt(f.n)} of the ${fmt(fileTot.get(f.p))} lines in this file today">${pct(f.n,fileTot.get(f.p))}</span></div>`).join('')+
+            `<div class="note">${ar.files.length>50?`The 50 largest of ${fmt(ar.files.length)} files.`:`${fmt(ar.files.length)} file${ar.files.length===1?'':'s'}.`} For a file, the share is of its lines today.</div></div>`:'')}).join('')+
       (all.length>shown.length?`<button class="toggle amore" data-i="${i}">All ${fmt(all.length)} areas</button>`:'')+'</div>';
   }
   // lines brought in per year, scaled to the person's busiest year

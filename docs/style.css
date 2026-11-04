@@ -151,7 +151,7 @@ nav.pages a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;bord
 .latest .open{padding:0 12px 12px}
 .pcols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px;margin-top:8px;align-items:start}
 .arows{display:grid;gap:1px}
-.arow{display:grid;grid-template-columns:minmax(0,14rem) minmax(0,1fr) 4.5rem 4rem;gap:10px;align-items:center;padding:4px 6px;border:0;border-radius:6px;background:none;color:inherit;font:inherit;font-size:.82rem;text-align:left;width:100%}
+.arow{display:grid;grid-template-columns:minmax(0,14rem) minmax(0,1fr) 4.5rem 5.5rem;gap:10px;align-items:center;padding:4px 6px;border:0;border-radius:6px;background:none;color:inherit;font:inherit;font-size:.82rem;text-align:left;width:100%}
 button.arow{cursor:pointer}button.arow:hover{background:var(--hover)}
 button.arow::before{content:none}
 .arow .name{font-family:var(--mono);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -168,7 +168,7 @@ button.arow .name::before{content:"▸ ";color:var(--muted)}button.arow[aria-exp
   .people .row .n.w,.people .row .med,.people .row .sp{display:none}
   .people .open{padding-left:12px}
   .pcols{grid-template-columns:1fr}
-  .arow{grid-template-columns:minmax(0,1fr) 4rem 3.5rem}
+  .arow{grid-template-columns:minmax(0,1fr) 4rem 4rem}
   .arow .bar{grid-column:1/-1;grid-row:2}
   .latest .row{grid-template-columns:4.5rem minmax(0,1fr) 3.2rem}
   .latest .row .bar{grid-column:1/-1;grid-row:2}

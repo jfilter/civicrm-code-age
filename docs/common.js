@@ -15,6 +15,8 @@ let Y0;
 const sum=a=>a.reduce((x,y)=>x+y,0);
 function binsOf(ys){return BINS.map(b=>{let s=0;for(let y=b.from;y<=b.to;y++)s+=ys[y-Y0]||0;return s})}
 function median(ys){const t=sum(ys);let acc=0;for(let i=0;i<ys.length;i++){acc+=ys[i];if(acc>=t/2)return Y0+i}return null}
+// the path below its area, e.g. tests/phpunit/api/v4/X.php → X.php
+const inArea=p=>{const s=p.split('/');return s.slice(areaOf(p).split('/').length+(s[1]==='phpunit'?1:0)).join('/')||p};
 function areaOf(p){
   const s=p.split('/');
   if(s[0]==='tests'){const r=s[1]==='phpunit'?s.slice(2):s.slice(1);return 'tests/'+(r.length>2?r.slice(0,2):r.slice(0,1)).join('/')}
@@ -33,3 +35,5 @@ function showTip(html,x,y){tip.innerHTML=html;tip.hidden=false;const r=tip.getBo
 const say=(()=>{const d=document.createElement('div');d.className='sr-only';d.setAttribute('aria-live','polite');document.body.append(d);return t=>{d.textContent=t}})();
 const swatch=i=>`<i style="background:var(${BINS[i].c})"></i>`;
 const niceStep=(max,n)=>{const raw=max/n,p=10**Math.floor(Math.log10(raw));return [1,2,2.5,5,10].map(m=>m*p).find(s=>s>=raw)};
+// the step among lo..hi ticks whose top gridline sits closest above max
+const niceAxis=(max,lo,hi)=>{let b;for(let n=lo;n<=hi;n++){const st=niceStep(max,n),tp=Math.ceil(max/st)*st;if(!b||tp<b[1])b=[st,tp]}return b};
