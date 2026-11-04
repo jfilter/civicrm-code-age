@@ -275,6 +275,13 @@ def counts(state):
     return files
 
 
+def trim(ys):
+    n = len(ys)
+    while n and not ys[n - 1]:
+        n -= 1
+    return ys[:n]
+
+
 def snapshots(ref, first_year, until):
     """The last first-parent commit before the first of each month, as git rev-list --before picks it."""
     chain = [line.split() for line in git("log", "--first-parent", "--format=%H %ct", ref).splitlines()]
@@ -323,6 +330,7 @@ def main():
     if not args.until:
         steps.append(("head", git("rev-parse", args.ref).strip()))
     stats, done, state, prev = collections.Counter(), [], None, None
+    before, paths, history = {}, {}, []
     for date, commit in steps:
         t = time.monotonic()
         files = code_files(commit)
@@ -348,6 +356,12 @@ def main():
                 grown = [Y0 + i for i in range(int(s["date"][:4]) - Y0) if ys[i] > s["ys"][i]]
                 if grown:
                     sys.exit(f"{date}: lines from {grown} outnumber those on {s['date']}")
+        # Per-file counts as changes against the previous snapshot: [path index, ys without trailing zeros],
+        # [path index] for a removed file. Replaying them from the first snapshot rebuilds any month.
+        delta = [[paths.setdefault(p, len(paths)), trim(v)] for p, v in files.items() if before.get(p) != v]
+        delta += [[paths[p]] for p in before if p not in files]
+        before = files
+        history.append(sorted(delta))
         done.append({"date": date, "commit": commit[:10], "files": len(files), "ys": ys})
     print(f"changed lines after the first snapshot: {dict(stats)}", file=sys.stderr)
 
@@ -362,6 +376,9 @@ def main():
     with open(args.out, "w") as f:
         json.dump({"meta": meta, "snapshots": done, "files": sorted([p, v] for p, v in counts(state).items())},
                   f, separators=(",", ":"))
+
+    with open(args.out.with_name("history.json"), "w") as f:
+        json.dump({"paths": list(paths), "deltas": history}, f, separators=(",", ":"))
 
 
 if __name__ == "__main__":

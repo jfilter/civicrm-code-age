@@ -23,7 +23,7 @@ jobs:
       - name: Commit data
         id: commit
         run: |
-          git add docs/data.json cache
+          git add docs/data.json docs/history.json cache
           git diff --cached --quiet && exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

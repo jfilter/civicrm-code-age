@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;750&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: one reading column; summary → age mix over time → survival → today's cohorts → per-area bars with file drilldown */
+/* Layout: one reading column; summary → age mix over time → survival → time slider over cohorts and per-area bars with file drilldown */
 :root{
   --bg:#f7f8fa; --panel:#ffffff; --fg:#17202e; --fg2:#4a5568; --muted:#6b7585; --line:#dfe3ea; --hover:#eef2f8; --focus:#2a78d6;
   --b0:#0d366b; --b1:#184f95; --b2:#2a78d6; --b3:#5598e7; --b4:#86b6ef;
@@ -64,6 +64,14 @@ section{display:grid;gap:14px}
 select,.toggle{border-radius:8px}
 .chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 button:focus-visible,select:focus-visible,.col:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* time slider stays visible while the cohorts and areas below it scroll */
+.when{display:grid;gap:40px}
+.timebar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.timebar input{flex:1 1 220px;min-width:0;accent-color:var(--b2)}
+.timebar output{font:600 .95rem var(--sans);font-variant-numeric:tabular-nums;min-width:10em}
+.timebar .btns{display:flex;gap:6px}
+.toggle:disabled,.timebar input:disabled{opacity:.6;cursor:default}
+.chart .sel{stroke:var(--fg);stroke-width:2}
 label.ctl{font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center}
 /* area rows */
 .rows{display:grid;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -90,6 +98,7 @@ th:first-child,td:first-child{text-align:left;font-family:var(--mono)}
 th{font:600 .78rem var(--sans);color:var(--muted)}
 #tip{position:fixed;z-index:10;pointer-events:none;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;box-shadow:0 6px 24px rgb(0 0 0 / .18);max-width:300px}
 #tip b{font-family:var(--mono)}
+#tip .hint{color:var(--muted);margin-bottom:4px}
 #tip .r{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
 #tip .r i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
 details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
@@ -133,6 +142,22 @@ details li{font-size:.88rem}
     <div class="chart" id="surv"></div>
   </section>
 
+  <section aria-labelledby="h-time">
+    <h2 id="h-time">Travel in time</h2>
+    <p>The sections below show the code as it stood on one date. Move the slider, or select a month in the age mix charts above, to go back to any month since 2006.</p>
+  </section>
+
+  <div class="when">
+  <div class="timebar" role="group" aria-label="Date of the code below">
+    <input type="range" id="t" min="0" max="0" value="0" disabled aria-label="Date">
+    <output id="t-out" for="t">Today</output>
+    <span class="btns">
+      <button class="toggle" id="t-prev" disabled>−1 year</button>
+      <button class="toggle" id="t-next" disabled>+1 year</button>
+      <button class="toggle" id="t-today" disabled>Today</button>
+    </span>
+  </div>
+
   <section aria-labelledby="h-cohort">
     <h2 id="h-cohort">Lines alive today, by year of last change</h2>
     <div class="legend" id="legend"></div>
@@ -141,7 +166,7 @@ details li{font-size:.88rem}
 
   <section aria-labelledby="h-areas">
     <h2 id="h-areas">Areas</h2>
-    <p>Age mix per directory, with the median year of its lines. Select an area to list its files.</p>
+    <p>Age mix per directory on the selected date, with the median year of its lines. Select an area to list its files.</p>
     <div class="controls">
       <div class="chips" id="chips" role="group" aria-label="Area group"></div>
       <label class="ctl" for="sort">Sort
@@ -156,6 +181,7 @@ details li{font-size:.88rem}
     </div>
     <div id="areas"></div>
   </section>
+  </div>
 
   <details>
     <summary>Method and limitations</summary>
@@ -202,21 +228,15 @@ const niceStep=(max,n)=>{const raw=max/n,p=10**Math.floor(Math.log10(raw));retur
 
 fetch('data.json').then(r=>r.json()).then(D=>{
   Y0=D.meta.y0;BINS[BINS.length-1].to=D.meta.y1;const NY=D.meta.y1-Y0+1;
-  const all=Array(NY).fill(0),areas=new Map();
-  for(const [p,ys] of D.files){
-    ys.forEach((v,i)=>all[i]+=v);
-    const a=areaOf(p);if(!areas.has(a))areas.set(a,{name:a,ys:Array(NY).fill(0),files:[]});
-    const A=areas.get(a);ys.forEach((v,i)=>A.ys[i]+=v);A.files.push({p,ys});
-  }
-  const total=sum(all),allBins=binsOf(all);
+  const totals=entries=>{const t=Array(NY).fill(0);for(const [,ys] of entries)ys.forEach((v,i)=>t[i]+=v);return t};
+  const all=totals(D.files),total=sum(all),allBins=binsOf(all);
 
   // intro and footer
   const asOf=new Date(D.meta.head[1]+'T00:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
   $('#lede').textContent=`CiviCRM core has ${(total/1e6).toLocaleString('en-US',{maximumFractionDigits:1})} million lines of code in ${fmt(D.files.length)} files. Of these, ${pct(allBins[0]+allBins[1],total)} were last changed before 2013, when the project still lived in Subversion. Half date from ${median(all)} or earlier, and ${pct(allBins[4],total)} were written or changed since 2022.`;
   $('#foot').innerHTML=`Data: civicrm-core ${D.meta.ref} as of ${asOf} (commit ${D.meta.head[0]}). Code and method: <a href="https://github.com/jfilter/civicrm-code-age">github.com/jfilter/civicrm-code-age</a>.`;
-  const legend=vals=>BINS.map((b,i)=>`<span>${swatch(i)}${b.lab}${vals?': '+pct(vals[i],sum(vals)):''} <span class="q">(${b.note})</span></span>`).join('');
+  const legend=vals=>BINS.map((b,i)=>`<span>${swatch(i)}${b.lab}${vals&&vals[i]?': '+pct(vals[i],sum(vals)):''} <span class="q">(${b.note})</span></span>`).join('');
   document.querySelectorAll('.mix-legend').forEach(l=>l.innerHTML=legend());
-  $('#legend').innerHTML=legend(allBins);
 
   // ---- age mix over time: snapshots plus today
   const snaps=D.snapshots.map(s=>({label:s.date.slice(0,4),date:s.date,ys:s.ys})).concat([{label:'today',date:D.meta.head[1],ys:all}]);
@@ -239,21 +259,24 @@ fetch('data.json').then(r=>r.json()).then(D=>{
       const d='M'+snaps.map((s,j)=>`${X(s.x)},${Y(hi[j])}`).join('L')+'L'+snaps.map((s,j)=>`${X(s.x)},${Y(lo[j])}`).reverse().join('L')+'Z';
       el('path',{d,fill:`var(${b.c})`,stroke:'var(--bg)','stroke-width':1.5,'stroke-linejoin':'round'},svg);
       hi.forEach((v,j)=>base[j]=v)});
+    const sel=el('line',{y1:T,y2:H-B,class:'sel'},svg),mark=()=>{sel.setAttribute('x1',X(snaps[TI].x));sel.setAttribute('x2',X(snaps[TI].x))};
+    selMarks.push(mark);mark();
     const cross=el('line',{y1:T,y2:H-B,class:'cross',visibility:'hidden'},svg);
     snaps.forEach((s,j)=>{
       const a=j?(X(snaps[j-1].x)+X(s.x))/2:L,b=j<snaps.length-1?(X(s.x)+X(snaps[j+1].x))/2:W-R;
       const hit=el('rect',{x:a,y:T,width:b-a,height:H-B-T,class:'hit','aria-label':`${s.date}: ${fmt(s.n)} lines`},svg);
       if(s.label==='today'||s.date.slice(5,7)==='01')hit.setAttribute('tabindex',0); // one tab stop per year
+      hit.addEventListener('click',()=>setTime(j));
+      hit.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setTime(j)}});
       const show=(cx,cy)=>{cross.setAttribute('x1',X(s.x));cross.setAttribute('x2',X(s.x));cross.setAttribute('visibility','visible');
-        showTip(`<b>${s.label==='today'?'Today, '+s.date:s.date}</b><div class="r"><span>All lines</span><span>${fmt(s.n)}</span></div>`+
+        showTip(`<b>${s.label==='today'?'Today, '+s.date:s.date}</b><div class="hint">Click to see this date below</div><div class="r"><span>All lines</span><span>${fmt(s.n)}</span></div>`+
           BINS.map((b,i)=>({b,i})).reverse().filter(({i})=>s.bins[i]).map(({b,i})=>`<div class="r"><span>${swatch(i)}${b.lab}</span><span>${fmt(s.bins[i])} · ${pct(s.bins[i],s.n)}</span></div>`).join(''),cx,cy)};
       hit.addEventListener('pointermove',e=>show(e.clientX,e.clientY));
       hit.addEventListener('focus',()=>{const r=hit.getBoundingClientRect();show(r.left+r.width/2,r.top+40)});
       const hide=()=>{cross.setAttribute('visibility','hidden');tip.hidden=true};
       hit.addEventListener('pointerleave',hide);hit.addEventListener('blur',hide)});
   }
-  const drawMixes=()=>{drawMix($('#mix-share'),true);drawMix($('#mix-abs'),false)};
-  drawMixes();
+  const selMarks=[],drawMixes=()=>{selMarks.length=0;drawMix($('#mix-share'),true);drawMix($('#mix-abs'),false)};
 
   // ---- survival: per cohort of lines that reached master in a year, share left relative to the next January
   const curves=SURV_COHORTS.map(c=>{
@@ -312,16 +335,25 @@ fetch('data.json').then(r=>r.json()).then(D=>{
   drawSurv();
   let lastW=0;new ResizeObserver(([e])=>{const w=Math.round(e.contentRect.width);if(w!==lastW){lastW=w;drawMixes();drawSurv()}}).observe($('#mix-share'));
 
-  // ---- today's cohort columns
-  const max=Math.max(...all),cstep=niceStep(max,4),top=Math.ceil(max/cstep)*cstep;
+  // ---- cohort columns on the selected date; one scale for all dates so they compare
+  const max=Math.max(...snaps.flatMap(s=>s.ys)),cstep=niceStep(max,4),top=Math.ceil(max/cstep)*cstep;
   let ya='',g='';for(let v=0;v<=top;v+=cstep){ya+=`<span style="bottom:${100*v/top}%">${v?fmt(v/1000)+'k':'0'}</span>`;if(v)g+=`<div class="gl" style="bottom:${100*v/top}%"></div>`}
   const binIdx=yr=>BINS.findIndex(b=>yr>=b.from&&yr<=b.to);
-  $('#cols').innerHTML=`<div class="yaxis" aria-hidden="true">${ya}</div><div class="plot" role="img" aria-label="Column chart: lines alive today by year of last change">${g}`+
-    all.map((v,i)=>`<div class="col" tabindex="0" data-year="${Y0+i}" aria-label="${Y0+i}: ${fmt(v)} lines"><div style="height:${100*v/top}%;background:var(${BINS[binIdx(Y0+i)].c})"></div></div>`).join('')+
-    `</div><div class="xaxis" aria-hidden="true">${all.map((_,i)=>`<span>${(Y0+i)%2===0?"'"+String(Y0+i).slice(2):''}</span>`).join('')}</div>`;
+  function drawCohorts(when){
+    $('#legend').innerHTML=legend(binsOf(cur));
+    $('#cols').innerHTML=`<div class="yaxis" aria-hidden="true">${ya}</div><div class="plot" role="img" aria-label="Column chart: lines alive ${when} by year of last change">${g}`+
+      cur.map((v,i)=>`<div class="col" tabindex="0" data-year="${Y0+i}" aria-label="${Y0+i}: ${fmt(v)} lines"><div style="height:${100*v/top}%;background:var(${BINS[binIdx(Y0+i)].c})"></div></div>`).join('')+
+      `</div><div class="xaxis" aria-hidden="true">${cur.map((_,i)=>`<span>${(Y0+i)%2===0?"'"+String(Y0+i).slice(2):''}</span>`).join('')}</div>`;
+  }
 
   // ---- areas; small ones fold into one row per group so the list stays scannable
-  const MIN=400,list=[],small=new Map();
+  const MIN=400;
+  function buildAreas(entries){
+  const areas=new Map(),list=[],small=new Map();
+  for(const [p,ys] of entries){
+    const a=areaOf(p);if(!areas.has(a))areas.set(a,{name:a,ys:Array(NY).fill(0),files:[]});
+    const A=areas.get(a);ys.forEach((v,i)=>A.ys[i]+=v);A.files.push({p,ys});
+  }
   for(const A of areas.values()){const n=sum(A.ys);
     if(n>=MIN)list.push(A);else{const g=groupOf(A.name),k=g+' · small areas';
       if(!small.has(k))small.set(k,{name:k,ys:Array(NY).fill(0),files:[],group:g});
@@ -329,6 +361,8 @@ fetch('data.json').then(r=>r.json()).then(D=>{
   list.push(...small.values());
   for(const A of list){A.n=sum(A.ys);A.bins=binsOf(A.ys);A.med=median(A.ys);A.group=A.group||groupOf(A.name);A.old=(A.bins[0]+A.bins[1])/A.n;
     for(const f of A.files){f.n=sum(f.ys);f.bins=binsOf(f.ys);f.med=median(f.ys)}}
+  return list;
+  }
   const groups=['All','CRM','Civi','ext','templates','api','tests','Other'];
   $('#chips').innerHTML=groups.map(g=>`<button class="chip" data-g="${g}" aria-pressed="${g===STATE.group}">${g}</button>`).join('');
   $('#chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;STATE.group=b.dataset.g;document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===b));render()};
@@ -356,7 +390,37 @@ fetch('data.json').then(r=>r.json()).then(D=>{
   }
   $('#areas').onclick=e=>{const r=e.target.closest('button.row');if(!r)return;const a=r.dataset.a;STATE.open.has(a)?STATE.open.delete(a):STATE.open.add(a);render();
     const again=document.querySelector(`button.row[data-a="${CSS.escape(a)}"]`);again&&again.focus()};
-  render();
+
+  // ---- time: index into snaps, the last one is today; history.json holds per-file changes per snapshot
+  let TI=snaps.length-1,cur=all,list=buildAreas(D.files),H=null;
+  const long=d=>new Date(d+'T00:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+  function entriesAt(i){
+    if(i===snaps.length-1)return D.files;
+    const st=new Map();
+    for(let k=0;k<=i;k++)for(const [f,ys] of H.deltas[k])ys?st.set(f,ys):st.delete(f);
+    return [...st].map(([f,ys])=>[H.paths[f],ys]);
+  }
+  function setTime(i){
+    if(!H&&i!==snaps.length-1)return;
+    TI=i;const s=snaps[i],today=i===snaps.length-1,when=today?'today':'on '+long(s.date),entries=entriesAt(i);
+    cur=totals(entries);list=buildAreas(entries);
+    $('#t').value=i;$('#t').setAttribute('aria-valuetext',today?`Today, ${long(s.date)}`:long(s.date));
+    $('#t-out').textContent=today?`Today, ${long(s.date)}`:long(s.date);
+    $('#t-prev').disabled=!H||i<12;$('#t-next').disabled=!H||i+12>snaps.length-1;$('#t-today').disabled=!H||today;
+    $('#h-cohort').textContent=`Lines alive ${when}, by year of last change`;
+    history.replaceState(null,'',today?location.pathname+location.search:'#'+s.date.slice(0,7));
+    drawCohorts(when);render();selMarks.forEach(m=>m());
+  }
+  const move=d=>setTime(Math.max(0,Math.min(snaps.length-1,TI+d)));
+  $('#t').max=snaps.length-1;
+  $('#t').oninput=e=>setTime(+e.target.value);
+  $('#t-prev').onclick=()=>move(-12);$('#t-next').onclick=()=>move(12);$('#t-today').onclick=()=>setTime(snaps.length-1);
+  const want=snaps.findIndex(s=>s.label!=='today'&&s.date.slice(0,7)===location.hash.slice(1));
+  drawMixes();drawCohorts('today');render();$('#t').value=TI;$('#t-out').textContent=`Today, ${long(snaps[TI].date)}`;
+  fetch('history.json').then(r=>r.json()).then(h=>{
+    H=h;$('#t').disabled=false;
+    setTime(want<0?TI:want);
+  }).catch(err=>{$('#t-out').textContent=`History could not be loaded: ${err.message}`});
 
   // tooltips for bar segments and cohort columns
   const lookup=label=>{for(const A of list){if(A.name===label)return A;const f=A.files.find(f=>f.p===label);if(f)return f}};
@@ -365,10 +429,10 @@ fetch('data.json').then(r=>r.json()).then(D=>{
     if(seg){const O=lookup(seg.dataset.label),i=+seg.dataset.tip,b=BINS[i];
       const yrs=[];for(let y=b.from;y<=b.to;y++)if(O.ys[y-Y0])yrs.push(`<div class="r"><span>${y}</span><span>${fmt(O.ys[y-Y0])}</span></div>`);
       showTip(`<b>${seg.dataset.label}</b><div class="r" style="margin-top:4px"><span>${swatch(i)}${b.lab}</span><span>${fmt(O.bins[i])} · ${pct(O.bins[i],O.n)}</span></div>${yrs.join('')}`,e.clientX,e.clientY)}
-    else if(col){const yr=+col.dataset.year;showTip(`<b>${yr}</b><div class="r"><span>Lines</span><span>${fmt(all[yr-Y0])}</span></div><div class="r"><span>Share</span><span>${pct(all[yr-Y0],total)}</span></div>`,e.clientX,e.clientY)}
+    else if(col){const yr=+col.dataset.year;showTip(`<b>${yr}</b><div class="r"><span>Lines</span><span>${fmt(cur[yr-Y0])}</span></div><div class="r"><span>Share</span><span>${pct(cur[yr-Y0],sum(cur))}</span></div>`,e.clientX,e.clientY)}
     else if(!e.target.closest('.hit'))tip.hidden=true});
   document.addEventListener('focusin',e=>{const col=e.target.closest('.col');if(!col)return;const r=col.getBoundingClientRect(),yr=+col.dataset.year;
-    showTip(`<b>${yr}</b><div class="r"><span>Lines</span><span>${fmt(all[yr-Y0])}</span></div>`,r.left,r.top-40)});
+    showTip(`<b>${yr}</b><div class="r"><span>Lines</span><span>${fmt(cur[yr-Y0])}</span></div>`,r.left,r.top-40)});
   document.addEventListener('focusout',e=>{if(e.target.closest('.col'))tip.hidden=true});
 
   // method

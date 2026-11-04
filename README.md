@@ -5,9 +5,12 @@ code line of civicrm-core, including the SVN history back to 2004, and renders t
 
 - the age mix of the codebase on the first of every month since 2006 and today,
 - survival curves: how long lines that reached `master` in a given year stay unchanged, with their half-life,
-- the lines alive today per year of last change,
+- the lines alive per year of last change,
 - per area (`CRM/Contribute`, `ext/afform`, `templates/CRM/Event`, …) the share of each age band, the
   median year and a per-file drill-down.
+
+The last two show the code on one date: today, or any monthly snapshot picked with the time slider or in
+the age mix charts. The URL keeps the month (`#2014-01`).
 
 ## View
 
@@ -18,7 +21,9 @@ python3 -m http.server -d docs 8000
 # open http://localhost:8000
 ```
 
-`docs/data.json` is committed; the page loads it with `fetch`, so it needs a web server rather than `file://`.
+`docs/data.json` and `docs/history.json` are committed; the page loads them with `fetch`, so it needs a web
+server rather than `file://`. `history.json` holds the per-file counts of every snapshot as changes against
+the one before, about 1.2 MB compressed, and loads after the page has rendered.
 
 ## Reproduce
 
@@ -32,7 +37,7 @@ python3 -m http.server -d docs 8000
 Needs `git` and Python 3.11+, nothing else. A run follows the code from one snapshot per month since
 `--first-year` (default 2006) to the branch tip and takes about 25 minutes on 10 cores without a cache. It keeps a bare clone
 in `cache/repo.git`, fetches the branch into it on every run, never writes to the source clone, and
-overwrites `docs/data.json`.
+overwrites `docs/data.json` and `docs/history.json`.
 
 Blame results are cached per month in `cache/<key>/` (`--cache` to move it), keyed by the blame code, the
 file filter and `ignore-revs.txt`, and committed, about 40 KB per month. A run blames only the months that are
