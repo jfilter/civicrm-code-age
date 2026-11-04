@@ -34,7 +34,7 @@
 
   <section aria-labelledby="h-rel">
     <h2 id="h-rel">All releases since 2005</h2>
-    <p>One column per release, from 1.0 in 2005 to the code on master that no release ships yet. The full column is the code a release brought in, the coloured part what of it is still there today, by the year it reached master. Select a release for its authors and areas.</p>
+    <p>One column per release, from 1.0 in 2005 to the code on master that no release ships yet. The full column is the code a release brought in, the coloured part what of it is still there today, by the year it reached master. Releases that ship no line an earlier version did not already ship, such as 4.0, have no column. Select a release for its authors and areas.</p>
     <div class="legend" id="rel-legend"></div>
     <div class="chart" id="rel"></div>
     <div id="rel-detail" aria-live="polite"></div>
@@ -82,12 +82,12 @@ loadWho().then(({D,W,R,A,NY,first,total})=>{
     const W2=Math.max(300,host.clientWidth),narrow=W2<600,H=narrow?220:300,L=narrow?40:56,Rm=8,T=10,B=28;
     const svg=el('svg',{viewBox:`0 0 ${W2} ${H}`,role:'img','aria-label':'Column chart of the lines each release brought in and how many are still there'},host);
     const max=Math.max(...R.map(r=>Math.max(r.intro,r.alive))),[st,tp]=niceAxis(max,4,7);
-    const bw=(W2-L-Rm)/R.length,X=i=>L+i*bw,Y=v=>H-B-v/tp*(H-B-T);
+    const C=R.flatMap((r,i)=>r.intro?[i]:[]),P=new Map(C.map((i,j)=>[i,j])),bw=(W2-L-Rm)/C.length,X=i=>L+P.get(i)*bw,Y=v=>H-B-v/tp*(H-B-T);
     for(let v=0;v<=tp;v+=st){el('line',{x1:L,x2:W2-Rm,y1:Y(v),y2:Y(v),class:'grid'},svg);el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=v?fmt(v/1000)+'k':'0'}
-    let lastLab=-1e9;
-    R.forEach((r,i)=>{
-      const [maj,min]=r.name.split('.'),x=X(i)+bw/2;
-      if((r.name==='master'||(r.name.split('.').length===2&&+min%(narrow?100:10)===0&&(+maj>=5||+min===0)))&&x-lastLab>(narrow?40:34)){
+    let lastLab=-1e9,pm;
+    C.forEach(i=>{const r=R[i];
+      const [maj,min]=r.name.split('.'),x=X(i)+bw/2,firstOfMajor=maj!==pm;pm=maj;
+      if((r.name==='master'||firstOfMajor||(r.name.split('.').length===2&&+min%(narrow?100:10)===0&&(+maj>=5||+min===0)))&&x-lastLab>(narrow?40:34)){
         el('text',{x,y:H-8,'text-anchor':'middle'},svg).textContent=r.name==='master'?'next':r.name;lastLab=x}
       const w=Math.max(1,bw-(bw>4?1:0)),h=Math.max(r.intro,r.alive);
       if(h>r.alive)el('rect',{x:X(i),y:Y(h),width:w,height:Y(r.alive)-Y(h),fill:'var(--hover)',stroke:'var(--muted)','stroke-width':.75},svg);
@@ -96,8 +96,8 @@ loadWho().then(({D,W,R,A,NY,first,total})=>{
     const cur=el('rect',{y:H-B+2,height:5,width:Math.max(bw,4),fill:'var(--fg)',visibility:'hidden'},svg);
     const hit=el('rect',{x:L,y:T,width:W2-L-Rm,height:H-B-T,class:'hit',tabindex:0,'aria-label':'Releases. Left and right arrows move between releases, Enter shows the selected one.'},svg);
     const show=(i,cx,cy)=>{focusRel=i;cur.setAttribute('x',X(i)+bw/2-Math.max(bw,4)/2);cur.setAttribute('visibility','visible');showTip(relTip(R[i]),cx,cy)};
-    const idx=e=>{const r=svg.getBoundingClientRect();return Math.max(0,Math.min(R.length-1,Math.floor(((e.clientX-r.left)*W2/r.width-L)/bw)))};
-    const hide=()=>{cur.setAttribute('visibility',sel==null?'hidden':'visible');if(sel!=null)cur.setAttribute('x',X(sel)+bw/2-Math.max(bw,4)/2);tip.hidden=true};
+    const idx=e=>{const r=svg.getBoundingClientRect();return C[Math.max(0,Math.min(C.length-1,Math.floor(((e.clientX-r.left)*W2/r.width-L)/bw)))]};
+    const hide=()=>{cur.setAttribute('visibility',P.has(sel)?'visible':'hidden');if(P.has(sel))cur.setAttribute('x',X(sel)+bw/2-Math.max(bw,4)/2);tip.hidden=true};
     hit.addEventListener('pointermove',e=>show(idx(e),e.clientX,e.clientY));
     hit.addEventListener('pointerleave',hide);hit.addEventListener('blur',hide);
     hit.addEventListener('click',e=>pick(idx(e)));
@@ -105,7 +105,7 @@ loadWho().then(({D,W,R,A,NY,first,total})=>{
     hit.addEventListener('focus',key);
     hit.addEventListener('keydown',e=>{
       const d={ArrowRight:1,ArrowLeft:-1,PageUp:-10,PageDown:10}[e.key];
-      if(d){e.preventDefault();focusRel=Math.max(0,Math.min(R.length-1,focusRel+d));key()}
+      if(d){e.preventDefault();focusRel=C[Math.max(0,Math.min(C.length-1,P.get(focusRel)+d))];key()}
       else if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(focusRel);$('#rel .hit').focus()}});
     hide();
   }
