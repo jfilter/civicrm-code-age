@@ -128,8 +128,8 @@ nav.pages a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;bord
 .mini .r>span:last-child{text-align:right;font-family:var(--mono);font-size:.78rem;color:var(--fg2);font-variant-numeric:tabular-nums}
 .mini .r .bar{height:9px}
 .mini .cap{font:600 .78rem var(--sans);color:var(--muted);margin-bottom:2px}
-.people .row{grid-template-columns:2.2rem minmax(0,12rem) minmax(0,1fr) 9rem 5.5rem 5.5rem 3.5rem}
-.people .sp{font:600 .78rem var(--sans);color:var(--muted);padding-left:16px}
+.people .row{grid-template-columns:2.2rem minmax(0,12rem) minmax(0,1fr) 14rem 5.5rem 5.5rem 3.5rem}
+.people .sp{font:600 .78rem var(--sans);color:var(--muted);padding-left:28px}
 .people .sp svg{display:block;width:100%;height:16px;fill:var(--b2)}
 .act{margin:10px 0 4px;max-width:640px}
 .act .cap{font:600 .78rem var(--sans);color:var(--muted);margin-bottom:4px}
