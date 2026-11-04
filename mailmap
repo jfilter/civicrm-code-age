@@ -1,6 +1,11 @@
-# Identities analyze.py cannot merge by e-mail or full name. Each entry is backed by the GitHub account
-# whose pull requests carry the commits.
+# Identities analyze.py cannot merge by e-mail or full name, and names for addresses whose most frequent name
+# is no person's. Each join is backed by the GitHub account whose pull requests carry the commits.
 # ufundo: commits as ben@civicrm.org, ufundo@gmail.com, bw@ufundo.tech and without an address
 <ben@civicrm.org> <ufundo@gmail.com>
 <ben@civicrm.org> <bw@ufundo.tech>
 <ben@civicrm.org> <benjamin>
+# eileenmcnaughton: a mistyped domain
+<emcnaughton@wikimedia.org> <emcnaughton@wikmedia.org>
+# Names for addresses whose most frequent name is no person's
+Rohan Katkar <rohan.katkar@webaccessglobal.com>
+priyankakaran26 <priyanka.karan26@gmail.com>

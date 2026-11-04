@@ -57,7 +57,7 @@
 <script src="who.js"></script>
 <script>
 const P={group:'All',area:'',sort:'alive',all:false,open:new Set(),areas:new Set(),areasAll:new Set()};
-loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames})=>{
+loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames,hidden})=>{
   const living=ranked.filter(a=>a.alive),half=needed(.5),names=ranked.slice(0,half).map(a=>a.name);
   const list=n=>n.length>1?n.slice(0,-1).join(', ')+' and '+n[n.length-1]:n[0];
   const recent=a=>a.introYs[NY-1]+a.introYs[NY-2];
@@ -89,8 +89,8 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames})=>{
   }
   function renderPeople(){
     const whole=P.group==='All'&&!P.area;
-    // totals include copies of unknown origin, the list only people
-    const scope=scoped(),all=sum(scope.map(x=>x.alive)),rows=scope.filter(x=>x.i!==W.unknown&&(x.alive||(whole&&x.a.intro)));
+    // totals include the hidden entries, the list only people
+    const scope=scoped(),all=sum(scope.map(x=>x.alive)),rows=scope.filter(x=>!hidden.has(x.i)&&(x.alive||(whole&&x.a.intro)));
     const key={alive:x=>x.alive,intro:x=>x.a.intro,recent:x=>recent(x.a),left:x=>x.a.intro>=1000?x.a.alive/x.a.intro:-1}[P.sort];
     rows.sort((x,y)=>key(y)-key(x)||y.alive-x.alive);
     const shown=P.all?rows:rows.slice(0,40);

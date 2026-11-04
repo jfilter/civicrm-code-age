@@ -30,6 +30,7 @@ import zlib
 HERE = pathlib.Path(__file__).resolve().parent
 IGNORE = HERE / "ignore-revs.txt"
 MAILMAP = HERE / "mailmap"
+PROJECT = "info@civicrm.org"  # shared account: version bumps and the APIv4 import
 SVN_URL = "https://github.com/civicrm/civicrm-svn.git"
 # "Import from SVN (r45945, r596)", the first content commit of civicrm-core
 SVN_IMPORT = "6a4880350680e1e4d20e5c8a622a791f926ca750"
@@ -530,6 +531,8 @@ def main():
     rel, (author, names) = release_of(rels), authors(args.ref)
     author[None] = len(names)
     names.append("Unknown (copied code)")
+    # no person: copies of unknown origin and the project account
+    hidden = [author[None], author[git("log", "-1", "--format=%H", f"--author=<{PROJECT}>", args.ref).strip()]]
     # the year the commit landed, which for a copy is the year of its source line
     who = [(rel(pos), author[c], (year if c is None else LANDED[c][0]) - Y0) for year, c, pos in ORIGINS]
     alive = []
@@ -540,7 +543,7 @@ def main():
     for i, n in INTRODUCED.items():
         introduced[who[i]] += n
     with open(args.out.with_name("who.json"), "w") as f:
-        json.dump({"releases": [[name, at, released] for name, _, at, released in rels], "authors": names, "unknown": author[None],
+        json.dump({"releases": [[name, at, released] for name, _, at, released in rels], "authors": names, "hidden": hidden,
                    "files": alive, "introduced": [[*k, n] for k, n in sorted(introduced.items())],
                    "months": months}, f, separators=(",", ":"))
 
