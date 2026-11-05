@@ -3,6 +3,8 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const long=d=>new Date(d+'T00:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
 // the first monthly snapshot on or after a date, as the code age page addresses it
 const monthAfter=d=>{const [y,m,dd]=d.split('-').map(Number);const t=dd===1?[y,m]:m===12?[y+1,1]:[y,m+1];return t[0]+'-'+String(t[1]).padStart(2,'0')};
+// lines changed or removed per line brought in; '–' below 1,000 lines brought in, where it says little
+const ratio=(rem,intro)=>intro>=1000?(rem/intro).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'–';
 const topN=(m,k)=>[...m].sort((a,b)=>b[1]-a[1]).slice(0,k);
 const inc=(m,k,n)=>m.set(k,(m.get(k)||0)+n);
 const relTitle=r=>r.name==='master'?'master, not yet released':'CiviCRM '+r.name;

@@ -98,11 +98,11 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames,hidden})=>{
     const shown=P.all?rows:rows.slice(0,40);
     const alive=rows.filter(x=>x.alive).length;
     $('#people').innerHTML=`<p>${fmt(alive)} people with ${fmt(all)} lines here today.${rows.length>alive?` ${fmt(rows.length-alive)} more brought in code that is all gone.`:''}${P.sort==='left'||P.sort==='ratio'?' Ranked among authors who wrote at least 1,000 lines.':''}${whole?'':' Active, Written, Removed and Left count all of a person’s code, not only this area.'}</p>`+
-      '<div class="rows people"><div class="row head" aria-hidden="true"><span></span><span>Author</span><span class="bar"></span><span class="sp">Active</span><span class="n">Today</span><span class="n w">Written</span><span class="n w" title="Lines they changed or removed, their own or by others">Removed</span><span class="med">Left</span></div>'+
+      '<div class="rows people"><div class="row head" aria-hidden="true"><span></span><span>Author</span><span class="bar"></span><span class="sp">Active</span><span class="n">Today</span><span class="n w">Written</span><span class="n w" title="Lines they changed or removed, their own or by others">Removed</span><span class="n w" title="Lines changed or removed per line written, from 1,000 lines written">−/+</span><span class="med">Left</span></div>'+
       shown.map((x,k)=>{const open=P.open.has(x.i),b=binsOf(x.ys);
         return `<button class="row" aria-expanded="${open}" data-i="${x.i}" data-k="${k}"><span class="rank">${k+1}</span><span class="name" title="${esc(x.a.name)}">${esc(x.a.name)}</span>`+
           `<span class="bar" aria-hidden="true">${b.map((v,j)=>v?`<div style="flex:${v};background:var(${BINS[j].c})"></div>`:'').join('')}</span><span class="sp" title="${esc(span(x.a))}">${spark(x.a.introYs)}</span>`+
-          `<span class="n">${fmt(x.alive)}${whole?'':' · '+pct(x.alive,all,0)}</span><span class="n w">${fmt(x.a.intro)}</span><span class="n w">${fmt(x.a.rem)}</span><span class="med">${x.a.intro?pct(x.a.alive,x.a.intro,0):'–'}</span></button>`+(open?personHTML(x.a,x.i):'')}).join('')+'</div>'+
+          `<span class="n">${fmt(x.alive)}${whole?'':' · '+pct(x.alive,all,0)}</span><span class="n w">${fmt(x.a.intro)}</span><span class="n w">${fmt(x.a.rem)}</span><span class="n w">${ratio(x.a.rem,x.a.intro)}</span><span class="med">${x.a.intro?pct(x.a.alive,x.a.intro,0):'–'}</span></button>`+(open?personHTML(x.a,x.i):'')}).join('')+'</div>'+
       (rows.length>shown.length?`<button class="toggle more" id="pmore">Show all ${fmt(rows.length)}</button>`:'');
     const more=$('#pmore');if(more)more.onclick=()=>{P.all=true;renderPeople();refocus('#people button.row[data-k="40"]')};
   }
