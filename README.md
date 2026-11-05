@@ -15,10 +15,10 @@ the age mix charts. The URL keeps the month (`#2014-01`).
 Two more pages attribute today's code:
 
 - **Releases** (`releases.html`): per release what it brought in and how much of it is still there, newest
-  first and paged, with the upcoming release candidate and unreleased `master`; its authors and areas; and
-  the lines brought in and removed per month. `releases.html#6.18` opens a release.
-- **People** (`people.html`): who wrote the code alive today, ranked by lines still there, brought in, gone or
-  recent; per person the years they were active, their areas down to files and their releases.
+  first and paged, with the upcoming release candidate and unreleased `master`; its authors and areas, and who changed or removed
+  most lines in it; and the lines brought in and removed per month. `releases.html#6.18` opens a release.
+- **People** (`people.html`): who wrote the code alive today, ranked by lines still there, brought in, changed or
+  removed, gone or recent; per person the years they were active, their areas down to files and their releases.
   `people.html#Name` opens a person.
 
 ## View
@@ -98,6 +98,11 @@ deletes cached steps it no longer uses, such as the step from the last first of 
   code age page it is new code of the year it was made. Identities with the same e-mail address or full name are one author, and so is
   an address whose local part spells a full name. [`mailmap`](mailmap) joins identities that share neither,
   each backed by the GitHub account whose pull requests carry their commits.
+- **Lines changed or removed** are the lines that vanish between two snapshots, as in the monthly totals: a moved
+  line does not count, and code added and deleted again within one month leaves no trace (in 2014 a commit added
+  275,642 lines of `node_modules` and another deleted them the same day). Per file and month they go to the commits that
+  deleted lines in that file (`git log --no-merges -w --numstat`), in proportion to those deletions; where no such
+  commit exists, as in a merge's conflict resolution, they count under no person.
 
 ## Excluded bundled code
 
@@ -138,7 +143,7 @@ the largest January 1st snapshot; for comparison, CiviCRM's own code had 280,675
 | `cache/<key>/` | Blame results per month, so a run only blames new months |
 | `docs/data.json` | Generated: per file and per snapshot, lines per year from 2004 |
 | `docs/history.json` | Generated: per-file counts of every snapshot as changes against the one before |
-| `docs/who.json` | Generated: lines alive and brought in per release, author and year |
+| `docs/who.json` | Generated: lines alive and brought in per release, author and year; lines changed or removed per release, author and year |
 | `docs/og.png` | Generated: link preview image, the age mix of every snapshot |
 
 ## License

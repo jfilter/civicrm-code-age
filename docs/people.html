@@ -36,6 +36,8 @@
         <select id="psort">
           <option value="alive">Most lines today</option>
           <option value="intro">Most lines written</option>
+          <option value="rem">Most lines changed or removed</option>
+          <option value="ratio">Most removed per line written</option>
           <option value="left">Largest share still there</option>
           <option value="recent">Most lines this year and last</option>
         </select>
@@ -91,16 +93,16 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames,hidden})=>{
     const whole=P.group==='All'&&!P.area;
     // totals include the hidden entries, the list only people
     const scope=scoped(),all=sum(scope.map(x=>x.alive)),rows=scope.filter(x=>!hidden.has(x.i)&&(x.alive||(whole&&x.a.intro)));
-    const key={alive:x=>x.alive,intro:x=>x.a.intro,recent:x=>recent(x.a),left:x=>x.a.intro>=1000?x.a.alive/x.a.intro:-1}[P.sort];
+    const key={alive:x=>x.alive,intro:x=>x.a.intro,recent:x=>recent(x.a),left:x=>x.a.intro>=1000?x.a.alive/x.a.intro:-1,rem:x=>x.a.rem,ratio:x=>x.a.intro>=1000?x.a.rem/x.a.intro:-1}[P.sort];
     rows.sort((x,y)=>key(y)-key(x)||y.alive-x.alive);
     const shown=P.all?rows:rows.slice(0,40);
     const alive=rows.filter(x=>x.alive).length;
-    $('#people').innerHTML=`<p>${fmt(alive)} people with ${fmt(all)} lines here today.${rows.length>alive?` ${fmt(rows.length-alive)} more brought in code that is all gone.`:''}${P.sort==='left'?' Share ranked among authors who wrote at least 1,000 lines.':''}${whole?'':' Active, Written and Left count all of a person’s code, not only this area.'}</p>`+
-      '<div class="rows people"><div class="row head" aria-hidden="true"><span></span><span>Author</span><span class="bar"></span><span class="sp">Active</span><span class="n">Today</span><span class="n w">Written</span><span class="med">Left</span></div>'+
+    $('#people').innerHTML=`<p>${fmt(alive)} people with ${fmt(all)} lines here today.${rows.length>alive?` ${fmt(rows.length-alive)} more brought in code that is all gone.`:''}${P.sort==='left'||P.sort==='ratio'?' Ranked among authors who wrote at least 1,000 lines.':''}${whole?'':' Active, Written, Removed and Left count all of a person’s code, not only this area.'}</p>`+
+      '<div class="rows people"><div class="row head" aria-hidden="true"><span></span><span>Author</span><span class="bar"></span><span class="sp">Active</span><span class="n">Today</span><span class="n w">Written</span><span class="n w" title="Lines they changed or removed, their own or by others">Removed</span><span class="med">Left</span></div>'+
       shown.map((x,k)=>{const open=P.open.has(x.i),b=binsOf(x.ys);
         return `<button class="row" aria-expanded="${open}" data-i="${x.i}" data-k="${k}"><span class="rank">${k+1}</span><span class="name" title="${esc(x.a.name)}">${esc(x.a.name)}</span>`+
           `<span class="bar" aria-hidden="true">${b.map((v,j)=>v?`<div style="flex:${v};background:var(${BINS[j].c})"></div>`:'').join('')}</span><span class="sp" title="${esc(span(x.a))}">${spark(x.a.introYs)}</span>`+
-          `<span class="n">${fmt(x.alive)}${whole?'':' · '+pct(x.alive,all,0)}</span><span class="n w">${fmt(x.a.intro)}</span><span class="med">${x.a.intro?pct(x.a.alive,x.a.intro,0):'–'}</span></button>`+(open?personHTML(x.a,x.i):'')}).join('')+'</div>'+
+          `<span class="n">${fmt(x.alive)}${whole?'':' · '+pct(x.alive,all,0)}</span><span class="n w">${fmt(x.a.intro)}</span><span class="n w">${fmt(x.a.rem)}</span><span class="med">${x.a.intro?pct(x.a.alive,x.a.intro,0):'–'}</span></button>`+(open?personHTML(x.a,x.i):'')}).join('')+'</div>'+
       (rows.length>shown.length?`<button class="toggle more" id="pmore">Show all ${fmt(rows.length)}</button>`:'');
     const more=$('#pmore');if(more)more.onclick=()=>{P.all=true;renderPeople();refocus('#people button.row[data-k="40"]')};
   }
@@ -131,17 +133,20 @@ loadWho().then(({D,W,R,A,NY,first,total,ranked,needed,areaNames,hidden})=>{
   const spark=ys=>{const m=Math.max(1,...ys);return `<svg viewBox="0 0 ${ys.length*4} 16" preserveAspectRatio="none" aria-hidden="true">${ys.map((v,j)=>v?`<rect x="${j*4}" y="${16-Math.max(2,16*v/m)}" width="3" height="${Math.max(2,16*v/m)}"/>`:'').join('')}</svg>`};
   const bandOf=y=>BINS.findIndex(b=>y>=b.from&&y<=b.to);
   function activityHTML(a){
-    const m=Math.max(1,...a.introYs,...a.ys),y=years(a),peak=y.reduce((p,q)=>q[1]>p[1]?q:p,[0,0]);
-    return `<div class="act"><div class="cap">Lines brought in per year, filled by what is still there</div>`+
-      `<div class="actcols" role="img" aria-label="${esc(span(a))}${peak[1]?`, most lines in ${peak[0]} (${fmt(peak[1])})`:''}">`+
-      a.introYs.map((v,j)=>{const h=Math.max(v,a.ys[j]);return `<div class="acol" title="${Y0+j}: ${fmt(v)} brought in, ${fmt(a.ys[j])} still there">`+
+    const m=Math.max(1,...a.introYs,...a.ys,...a.remYs),mr=Math.max(...a.remYs),y=years(a),peak=y.reduce((p,q)=>q[1]>p[1]?q:p,[0,0]);
+    const title=j=>`${Y0+j}: ${fmt(a.introYs[j])} brought in, ${fmt(a.ys[j])} still there, ${fmt(a.remYs[j])} changed or removed`;
+    return `<div class="act"><div class="cap">Lines brought in per year, filled by what is still there, and below the line those they changed or removed</div>`+
+      `<div role="img" aria-label="${esc(span(a))}${peak[1]?`, most lines in ${peak[0]} (${fmt(peak[1])})`:''}, ${fmt(a.rem)} lines changed or removed"><div class="actcols">`+
+      a.introYs.map((v,j)=>{const h=Math.max(v,a.ys[j]);return `<div class="acol" title="${title(j)}">`+
         (h?`<div class="ain" style="height:${100*h/m}%"><div style="height:${100*a.ys[j]/h}%;background:var(${BINS[bandOf(Y0+j)].c})"></div></div>`:'')+'</div>'}).join('')+
+      `</div>`+(mr?`<div class="actcols down" style="height:${90*mr/m}px">`+a.remYs.map((v,j)=>`<div class="acol" title="${title(j)}">${v?`<div class="arem" style="height:${100*v/mr}%"></div>`:''}</div>`).join('')+'</div>':'')+
       `</div><div class="actx" aria-hidden="true">${a.introYs.map((_,j)=>`<span>${(Y0+j)%4===0?Y0+j:''}</span>`).join('')}</div></div>`;
   }
   function personHTML(a,i){
     const rels=[...a.rels.keys()].filter(r=>r<R.length-1).sort((x,y)=>x-y);
     const relSpan=rels.length?` Brought in code from ${R[rels[0]].name} to ${R[rels[rels.length-1]].name}.`:'';
-    return `<div class="open"><p>${fmt(a.alive)} of ${fmt(a.intro)} lines still there (${a.intro?pct(a.alive,a.intro):'–'}). ${span(a)}.${relSpan}</p>${activityHTML(a)}<div class="pcols">`+
+    const ratio=a.intro?` (${(a.rem/a.intro).toLocaleString('en-US',{maximumFractionDigits:2})} per line written)`:'';
+    return `<div class="open"><p>${fmt(a.alive)} of ${fmt(a.intro)} lines still there (${a.intro?pct(a.alive,a.intro):'–'}). Changed or removed ${fmt(a.rem)} lines${ratio}. ${span(a)}.${relSpan}</p>${activityHTML(a)}<div class="pcols">`+
       `<div class="mini"><div class="cap">Areas of their code today · select one for its files</div>${areasHTML(i)}</div>`+
       mini(topN(a.rels,8),'Releases they brought most lines into',r=>R[r].name==='master'?'next, unreleased':'CiviCRM '+R[r].name,r=>relHref(R[r]))+'</div></div>';
   }

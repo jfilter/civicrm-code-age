@@ -75,7 +75,7 @@ loadWho().then(({D,W,R,A,NY,first,total})=>{
   const relTip=r=>{const t=topN(r.authors.size?r.authors:r.authorsAlive,3);
     return `<b>${relTitle(r)}</b>`+
       (r.at?`<div class="r"><span>Branched</span><span>${r.at}</span></div>`:'')+(r.released?`<div class="r"><span>Released</span><span>${r.released}</span></div>`:'')+
-      `<div class="r"><span>Lines brought in</span><span>${r.partial?'at least ':''}${fmt(r.intro)}</span></div><div class="r"><span>Still there</span><span>${fmt(r.alive)} · ${pct(r.alive,r.intro)}</span></div>`+
+      `<div class="r"><span>Lines brought in</span><span>${r.partial?'at least ':''}${fmt(r.intro)}</span></div><div class="r"><span>Still there</span><span>${fmt(r.alive)} · ${pct(r.alive,r.intro)}</span></div><div class="r"><span>Changed or removed</span><span>${fmt(r.rem)}</span></div>`+
       (t.length?'<div class="hint" style="margin-top:4px">Most lines by</div>'+t.map(([a,n])=>`<div class="r"><span>${esc(A[a].name)}</span><span>${fmt(n)}</span></div>`).join(''):'')};
   function drawRel(){
     const host=$('#rel');host.innerHTML='';
@@ -111,9 +111,9 @@ loadWho().then(({D,W,R,A,NY,first,total})=>{
   function pick(i){sel=i;drawRel();$('#rel-detail').innerHTML=relDetail(R[i])}
   function relDetail(r){
     return `<div class="detail"><h3>${relTitle(r)}${r.released?` · released ${long(r.released)}`:r.at?` · branched ${long(r.at)}`:''}</h3>`+
-      `<p>${r.partial?'At least ':''}${fmt(r.intro)} lines brought in, ${fmt(r.alive)} (${pct(r.alive,r.intro)}) still there today.`+
+      `<p>${r.partial?'At least ':''}${fmt(r.intro)} lines brought in, ${fmt(r.alive)} (${pct(r.alive,r.intro)}) still there today. ${fmt(r.rem)} lines changed or removed.`+
       (r.at&&r.at>=first?` <a href="./#${monthAfter(r.at)}">See the code as it stood when ${r.name} branched</a>.`:'')+`</p><div class="cols2">`+
-      mini(topN(r.authors,8),'Most lines brought in by',a=>A[a].name,a=>personHref(A[a]))+mini(topN(r.authorsAlive,8),'Most lines still there by',a=>A[a].name,a=>personHref(A[a]))+mini(topN(r.areas,8),'Areas where they are now',k=>k)+'</div></div>';
+      mini(topN(r.authors,8),'Most lines brought in by',a=>A[a].name,a=>personHref(A[a]))+mini(topN(r.authorsAlive,8),'Most lines still there by',a=>A[a].name,a=>personHref(A[a]))+mini(topN(r.removers,8),'Most lines changed or removed by',a=>A[a].name,a=>personHref(A[a]))+mini(topN(r.areas,8),'Areas where they are now',k=>k)+'</div></div>';
   }
 
   // ---- latest releases: master, the release candidate and every release, newest first, twelve per page
@@ -122,11 +122,11 @@ loadWho().then(({D,W,R,A,NY,first,total})=>{
   $('#latest-legend').innerHTML=$('#rel-legend').innerHTML;
   function renderLatest(){
     const rows=ordered.slice(lpage*PER,lpage*PER+PER),lmax=Math.max(...rows.map(r=>Math.max(r.intro,r.alive)));
-    $('#latest').innerHTML='<div class="rows latest"><div class="row head" aria-hidden="true"><span>Release</span><span class="bar"></span><span class="n">Brought in</span><span class="med">Left</span><span class="who">People</span></div>'+
+    $('#latest').innerHTML='<div class="rows latest"><div class="row head" aria-hidden="true"><span>Release</span><span class="bar"></span><span class="n">Brought in</span><span class="n">Removed</span><span class="med">Left</span><span class="who">People</span></div>'+
       rows.map((r,j)=>{const k=lpage*PER+j,open=lopen.has(r),gone=Math.max(0,r.intro-r.alive);
         return `<button class="row" aria-expanded="${open}" data-k="${k}"><span class="name">${short(r)}</span>`+
           `<span class="bar" aria-hidden="true">${r.bins.map((v,j)=>v?`<div style="flex:${v};background:var(${BINS[j].c})"></div>`:'').join('')}${gone?`<div class="gone" style="flex:${gone}"></div>`:''}<div style="flex:${lmax-Math.max(r.intro,r.alive)}"></div></span>`+
-          `<span class="n">${fmt(r.intro)}</span><span class="med">${pct(r.alive,r.intro)}</span><span class="who">${fmt(r.authors.size)} people</span></button>`+
+          `<span class="n">${fmt(r.intro)}</span><span class="n" title="Lines changed or removed">${fmt(r.rem)}</span><span class="med">${pct(r.alive,r.intro)}</span><span class="who">${fmt(r.authors.size)} people</span></button>`+
           (open?`<div class="open">${relDetail(r)}</div>`:'')}).join('')+'</div>';
     $('#lpage').textContent=`${short(rows[0])} – ${short(rows[rows.length-1])} · page ${lpage+1} of ${pages}`;
     $('#newer').disabled=lpage===0;$('#older').disabled=lpage===pages-1;

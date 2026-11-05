@@ -19,20 +19,21 @@ function loadWho(){
   return Promise.all(['data.json','who.json'].map(u=>fetch(u).then(r=>{if(!r.ok)throw new Error(`${u}: ${r.status}`);return r.json()}))).then(([D,W])=>{
     Y0=D.meta.y0;BINS[BINS.length-1].to=D.meta.y1;const NY=D.meta.y1-Y0+1;
     const R=W.releases.map(([name,at,released])=>({name,at,released})).concat([{name:'master',at:null,released:null}]);
-    const A=W.authors.map((name,i)=>({i,name,ys:Array(NY).fill(0),introYs:Array(NY).fill(0),intro:0,areas:new Map(),rels:new Map()}));
-    for(const r of R){r.ys=Array(NY).fill(0);r.intro=0;r.authors=new Map();r.authorsAlive=new Map();r.areas=new Map()}
+    const A=W.authors.map((name,i)=>({i,name,ys:Array(NY).fill(0),introYs:Array(NY).fill(0),intro:0,remYs:Array(NY).fill(0),rem:0,areas:new Map(),rels:new Map()}));
+    for(const r of R){r.ys=Array(NY).fill(0);r.intro=0;r.rem=0;r.removers=new Map();r.authors=new Map();r.authorsAlive=new Map();r.areas=new Map()}
     const areaNames=new Set();
     for(const [p,t] of W.files){
       const area=areaOf(p);if(t.length)areaNames.add(area);
       for(let i=0;i<t.length;i+=4){const r=t[i],a=t[i+1],y=t[i+2],n=t[i+3];
         R[r].ys[y]+=n;A[a].ys[y]+=n;inc(A[a].areas,area,n);inc(R[r].authorsAlive,a,n);inc(R[r].areas,area,n)}}
     for(const [r,a,y,n] of W.introduced){R[r].intro+=n;A[a].intro+=n;A[a].introYs[y]+=n;inc(R[r].authors,a,n);inc(A[a].rels,r,n)}
+    for(const [r,a,y,n] of W.removed){A[a].rem+=n;A[a].remYs[y]+=n;R[r].rem+=n;inc(R[r].removers,a,n)}
     for(const x of [...R,...A]){x.alive=sum(x.ys);x.bins=binsOf(x.ys)}
     const first=D.snapshots[0].date,total=sum(A.map(a=>a.alive));
     // releases branched before the first snapshot lost lines nobody counted
     R.forEach((r,i)=>r.partial=i>0?R[i-1].at<first:r.at<first);
     // copies of unknown origin and the project account count in the totals but are no person, so no list shows them
-    const hidden=new Set(W.hidden);for(const r of R)for(const a of hidden){r.authors.delete(a);r.authorsAlive.delete(a)}
+    const hidden=new Set(W.hidden);for(const r of R)for(const a of hidden){r.authors.delete(a);r.authorsAlive.delete(a);r.removers.delete(a)}
     const ranked=A.filter(a=>!hidden.has(a.i)).sort((a,b)=>b.alive-a.alive);
     const needed=share=>{let acc=0;for(let k=0;k<ranked.length;k++){acc+=ranked[k].alive;if(acc>=share*total)return k+1}};
     $('#foot').innerHTML=`Data: civicrm-core ${D.meta.ref} as of ${long(D.meta.head[1])} (commit ${D.meta.head[0]}). Code and method: <a href="https://github.com/jfilter/civicrm-code-age">github.com/jfilter/civicrm-code-age</a>.`;
@@ -42,8 +43,9 @@ function loadWho(){
 
 const METHOD=first=>[
   `Each line is followed month by month as on the <a href="./">code age page</a>. Its author is the author of the commit that blame names for it; a line moved or reformatted keeps its author, a copy of code that is still there keeps the author of the original. Where blame cannot place the original, such as code copied from a side branch and changed on master since, the copy counts in the totals but for no person, and so does the project account "CiviCRM", which made the version bumps and imported APIv4 in 2019. On this page a copy also keeps the year and release of the original, so it counts where its author wrote it; on the code age page it is new code of the year it was made.`,
-  `A line's release is the first release, in version order, that ships it: releases from 4.3 on are the tags <span class="mono">X.Y.0</span> and the monthly <span class="mono">4.7.x</span>, a release branch without such a tag is its release candidate, earlier releases are the SVN branches <span class="mono">vX.Y</span>. A release ships master up to the commit it branched from. Fixes made only on a release branch count for the next release that merges them into master.`,
-  `Lines brought in are counted from ${first}, the first snapshot. Before that date the counts only hold what was still there on it, so for releases before 1.5 and for 2004 and 2005 they are lower bounds.`,
+  `A line's release, and that of a change or removal, is the first release, in version order, that ships it: releases from 4.3 on are the tags <span class="mono">X.Y.0</span> and the monthly <span class="mono">4.7.x</span>, a release branch without such a tag is its release candidate, earlier releases are the SVN branches <span class="mono">vX.Y</span>. A release ships master up to the commit it branched from. Fixes made only on a release branch count for the next release that merges them into master.`,
+  `Lines changed or removed are counted the same way, between the first of one month and the next: a line that is edited or deleted counts, a moved one does not, and a line added and deleted again within the month leaves no trace. They go to the commits of that month that deleted lines in the file, in proportion to the lines each deleted there, so a person's count includes edits to code others wrote.`,
+  `Lines brought in and removed are counted from ${first}, the first snapshot. Before that date the counts only hold what was still there on it, so for releases before 1.5 and for 2004 and 2005 they are lower bounds.`,
   `Identities with the same e-mail address or the same full name are one author, and so is an address whose local part spells a full name (<span class="mono">jane.doe@</span>). Names are shown as the author wrote them most often. Other shared accounts such as "mover" stay under their name.`,
   `In SVN times patches by others were usually committed by the core team, so before 2013 code counts for whoever committed it. On GitHub the author of a pull request's commits is the author.`
 ];

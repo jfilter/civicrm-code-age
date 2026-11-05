@@ -53,8 +53,9 @@ HUNK = re.compile(rb"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 repo = ""
 # Origins of lines: (year, commit, position of the first-parent commit that brought the change to ref); a line's
 # state is an index into ORIGINS.
-# INTRODUCED counts the lines each origin brought in, from the first snapshot on.
-ORIGINS, ORIGIN_IDS, INTRODUCED = [], {}, collections.Counter()
+# INTRODUCED counts the lines each origin brought in, from the first snapshot on; REMOVED the lines each commit
+# changed or removed, keyed like ORIGINS, with commit None where no commit deleted in that file.
+ORIGINS, ORIGIN_IDS, INTRODUCED, REMOVED = [], {}, collections.Counter(), collections.Counter()
 
 
 def introduce(commit, year, pos):
@@ -198,6 +199,31 @@ def hunks(old, new, paths):
     return out
 
 
+def deletions(ref):
+    """Per commit, the code lines git diff -w deletes per path (no merges, renames as delete and add)."""
+    out, cur = {}, None
+    log = git("log", "--no-merges", "-w", "--no-renames", "--numstat", "-z", "--format=%x00%H", ref, text=False)
+    for tok in log.split(b"\0"):
+        tok = tok.lstrip(b"\n").decode("utf-8", "surrogateescape")
+        if re.fullmatch(r"[0-9a-f]{40}", tok):
+            cur = out[tok] = {}
+        elif tok:
+            _, d, p = tok.split("\t", 2)
+            if d not in ("-", "0") and CODE.search(p) and not NOT_CODE.search(p):
+                cur[p] = int(d)
+    return out
+
+
+def allot(n, weights):
+    """Split n into integers proportional to weights {key: w}, by largest remainder."""
+    total = sum(weights.values())
+    exact = {k: n * w / total for k, w in weights.items()}
+    out = {k: int(v) for k, v in exact.items()}
+    for k in sorted(exact, key=lambda k: (out[k] - exact[k], k))[: n - sum(out.values())]:
+        out[k] += 1
+    return out
+
+
 def map_line(hs, n):
     """Line n (1-based) of the old side through hunks hs to its 0-based index on the new side; None if changed."""
     i, shift = n - 1, 0
@@ -300,6 +326,16 @@ def step(state, prev, commit, files, rows, stats):
             stats["rewritten"] += 1
         new_state[p][j] = i
     stats["removed"] += sum(not used for _, used in gone.values())
+    # Lines changed or removed per path go to the commits of this step that deleted lines there, in proportion.
+    lost = collections.Counter(p for (p, _), (_, used) in gone.items() if not used)
+    deleting = collections.defaultdict(dict)
+    for c in STEP_COMMITS:
+        for p, d in DELETIONS[c].items():
+            if p in lost:
+                deleting[p][c] = d
+    for p, n in lost.items():
+        for c, k in (allot(n, deleting[p]) if deleting[p] else {None: n}).items():
+            REMOVED[(c, now, here) if c is None else (c, *LANDED[c])] += k
     return new_state
 
 
@@ -435,7 +471,7 @@ def preview(snapshots, path, w=1200, h=630, pad=60):
 
 
 def main():
-    global repo, cache, LANDED, IGNORED
+    global repo, cache, LANDED, IGNORED, DELETIONS, STEP_COMMITS
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("src", nargs="?", default="https://github.com/civicrm/civicrm-core.git", help="path or URL")
     ap.add_argument("ref", nargs="?", default="master")
@@ -460,6 +496,10 @@ def main():
         if d.is_dir() and d.name not in (key, "repo.git"):
             shutil.rmtree(d)
     LANDED = landing(args.ref)
+    DELETIONS = deletions(args.ref)
+    by_pos = collections.defaultdict(list)  # commits with deletions by the first-parent position that landed them
+    for c in DELETIONS:
+        by_pos[LANDED[c][1]].append(c)
     IGNORED = [h for h in (l.strip() for l in IGNORE.read_text().splitlines()) if h and not h.startswith("#")]
 
     steps = snapshots(args.ref, args.first_year, args.until)
@@ -475,6 +515,8 @@ def main():
         if state is None:
             state = {p: [introduce(c, *landed(c, f"{p} at {commit[:10]}")) for c, _, _ in rows[p]] for p in files}
         else:
+            after, here = LANDED[prev][1], LANDED[commit][1]
+            STEP_COMMITS = [c for pos in range(after + 1, here + 1) for c in by_pos.get(pos, [])]
             state = step(state, prev, commit, files, rows, stats)
         print(f"{date} {commit[:10]}: {len(rows)} files blamed, {time.monotonic() - t:.1f}s", file=sys.stderr)
         prev = commit
@@ -530,7 +572,7 @@ def main():
     rels = releases(args.ref)
     rel, (author, names) = release_of(rels), authors(args.ref)
     author[None] = len(names)
-    names.append("Unknown (copied code)")
+    names.append("Unknown")
     # no person: copies of unknown origin and the project account
     hidden = [author[None], author[git("log", "-1", "--format=%H", f"--author=<{PROJECT}>", args.ref).strip()]]
     # the year the commit landed, which for a copy is the year of its source line
@@ -539,12 +581,15 @@ def main():
     for p, ids in sorted(state.items()):
         per = collections.Counter(who[i] for i in ids)
         alive.append([p, [x for k, n in sorted(per.items()) for x in (*k, n)]])
-    introduced = collections.Counter()
+    introduced, removed = collections.Counter(), collections.Counter()
     for i, n in INTRODUCED.items():
         introduced[who[i]] += n
+    for (c, year, pos), n in REMOVED.items():
+        removed[rel(pos), author[c], year - Y0] += n
     with open(args.out.with_name("who.json"), "w") as f:
         json.dump({"releases": [[name, at, released] for name, _, at, released in rels], "authors": names, "hidden": hidden,
                    "files": alive, "introduced": [[*k, n] for k, n in sorted(introduced.items())],
+                   "removed": [[*k, n] for k, n in sorted(removed.items())],
                    "months": months}, f, separators=(",", ":"))
 
 
